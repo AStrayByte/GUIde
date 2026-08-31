@@ -1,0 +1,219 @@
+{
+  "guide_version": "0.1.0",
+  "id": "01JQ8FQ2X7K3M9VB4H0TZC5RWD",
+  "title": "Verifier triage",
+  "subtitle": "Was the checker right to complain?",
+  "instructions": "For each complaint: was the answer actually fine (the checker cried wolf), or was it genuinely wrong (a real catch)? Progress saves automatically in this browser.",
+  "created_at": "2026-08-31T14:02:00Z",
+
+  "source": {
+    "agent": "claude-code",
+    "session_id": "00000000-0000-4000-8000-000000000000",
+    "cwd": "/Users/you/dev/search-api",
+    "repo": "search-api",
+    "branch": "eval-tooling",
+    "label": "verifier triage",
+    "note": "SYNTHETIC DATA. The real review this was modeled on contains client data and is gitignored."
+  },
+
+  "defaults": {
+    "response": {
+      "prompt": "Your verdict",
+      "fields": [
+        {
+          "id": "verdict",
+          "type": "choice",
+          "required": true,
+          "options": [
+            {
+              "value": "false_alarm",
+              "label": "✓ False alarm — answer was fine",
+              "tone": "good",
+              "key": "1"
+            },
+            {
+              "value": "good_catch",
+              "label": "✗ Good catch — answer was wrong",
+              "tone": "bad",
+              "key": "2"
+            },
+            {
+              "value": "unsure",
+              "label": "? Not sure",
+              "tone": "mute",
+              "key": "3"
+            }
+          ]
+        },
+        {
+          "id": "comment",
+          "type": "text",
+          "multiline": true,
+          "placeholder": "Comments (optional)"
+        }
+      ]
+    }
+  },
+
+  "summary": {
+    "progress": true,
+    "counters": [
+      { "label": "false alarms", "field": "verdict", "equals": "false_alarm" },
+      { "label": "good catches", "field": "verdict", "equals": "good_catch" },
+      { "label": "unsure", "field": "verdict", "equals": "unsure" }
+    ],
+    "rates": [
+      {
+        "label": "false-alarm rate",
+        "field": "verdict",
+        "numerator": ["false_alarm"],
+        "denominator": ["false_alarm", "good_catch"]
+      }
+    ]
+  },
+
+  "cards": [
+    {
+      "id": "1",
+      "title": "Chart widget sales by region",
+      "tags": ["numeric_faithfulness", "run 78"],
+      "meta": { "run": 78, "check": "numeric_faithfulness" },
+      "blocks": [
+        {
+          "type": "callout",
+          "label": "Why this check exists",
+          "tone": "warn",
+          "text": "Every number in the answer must be traceable to the data rows — a value, a total, an average, or a difference of two of them. This fires when one isn't.",
+          "footnote": "stated percent 31% in answer has no recoverable base/final total pair to verify against"
+        },
+        {
+          "type": "text",
+          "label": "The answer it complained about",
+          "format": "pre",
+          "text": "Here's the breakdown of widget sales by region:\n\n- **North:** 37 units [1]\n- **South:** 68 units [1]\n- **Unassigned:** 13 units [1]\n\nOut of **118 total units**, North accounts for roughly **31%** of sales, with the majority (58%) in South and a small group (11%) unassigned. [1]"
+        },
+        {
+          "type": "table",
+          "label": "The data the agent actually had — 3 rows",
+          "collapsed": true,
+          "columns": ["sales.count", "sales.region"],
+          "rows": [
+            { "sales.count": 68, "sales.region": "south" },
+            { "sales.count": 37, "sales.region": "north" },
+            { "sales.count": 13, "sales.region": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "How did revenue trend last quarter?",
+      "tags": ["trend_guard", "run 91"],
+      "meta": { "run": 91, "check": "trend_guard" },
+      "blocks": [
+        {
+          "type": "callout",
+          "label": "Why this check exists",
+          "tone": "warn",
+          "text": "A directional claim (\"up\", \"down\", \"growing\") needs at least two comparable periods in the data. This fires when the answer asserts a trend from a single point.",
+          "footnote": "answer claims 'steady growth' but result set contains one period"
+        },
+        {
+          "type": "text",
+          "label": "The answer it complained about",
+          "format": "pre",
+          "text": "Revenue for Q3 came in at **$412,000** [1], continuing the steady growth we've seen through the year."
+        },
+        {
+          "type": "table",
+          "label": "The data the agent actually had — 1 row",
+          "collapsed": true,
+          "columns": ["revenue.total", "revenue.quarter"],
+          "rows": [{ "revenue.total": 412000, "revenue.quarter": "2026-Q3" }]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Which phrasing of the revenue summary is better?",
+      "tags": ["prompt_ab", "run 104"],
+      "meta": {
+        "run": 104,
+        "check": "prompt_ab",
+        "variant_a": "terse-v3",
+        "variant_b": "narrative-v1"
+      },
+      "blocks": [
+        {
+          "type": "callout",
+          "label": "What you're deciding",
+          "tone": "info",
+          "text": "Two prompt variants produced these summaries from identical data. Pick the one you'd rather ship."
+        },
+        {
+          "type": "columns",
+          "columns": [
+            {
+              "label": "A",
+              "blocks": [
+                {
+                  "type": "text",
+                  "format": "pre",
+                  "text": "Q3 revenue: **$412,000**, up 8.4% on Q2's $380,000. [1]"
+                }
+              ]
+            },
+            {
+              "label": "B",
+              "blocks": [
+                {
+                  "type": "text",
+                  "format": "pre",
+                  "text": "Revenue climbed to **$412,000** in Q3 — an 8.4% gain over the $380,000 posted in Q2, and the third consecutive quarter of growth. [1]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "label": "Source data — 2 rows",
+          "collapsed": true,
+          "columns": ["revenue.total", "revenue.quarter"],
+          "rows": [
+            { "revenue.total": 380000, "revenue.quarter": "2026-Q2" },
+            { "revenue.total": 412000, "revenue.quarter": "2026-Q3" }
+          ]
+        }
+      ],
+      "response": {
+        "prompt": "Your pick",
+        "fields": [
+          {
+            "id": "winner",
+            "type": "compare",
+            "required": true,
+            "options": [
+              { "value": "A", "label": "A is better", "key": "a" },
+              { "value": "B", "label": "B is better", "key": "b" },
+              { "value": "tie", "label": "Tie", "key": "t" }
+            ]
+          },
+          {
+            "id": "confidence",
+            "type": "rating",
+            "min": 1,
+            "max": 5,
+            "labels": ["coin flip", "", "", "", "certain"]
+          },
+          {
+            "id": "comment",
+            "type": "text",
+            "multiline": true,
+            "placeholder": "Why? (optional)"
+          }
+        ]
+      }
+    }
+  ]
+}

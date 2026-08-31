@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+.env
+.dev.vars
+.superseded/
+
+# Batches and answers may contain real client data. Examples are synthetic and tracked.
+.guide/
+*.batch.json
+*.answers.json
+!examples/*.batch.json
+!examples/*.answers.json

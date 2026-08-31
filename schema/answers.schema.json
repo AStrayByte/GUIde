@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AStrayByte/GUIde/schema/answers.schema.json",
+  "title": "GUIde answer set",
+  "type": "object",
+  "required": ["guide_version", "batch_id", "answers"],
+  "additionalProperties": true,
+  "properties": {
+    "guide_version": {
+      "description": "major.minor.patch. MUST be the first key.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "batch_version": {
+      "description": "What the batch declared.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "viewer_version": {
+      "description": "What actually rendered it.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "degraded": {
+      "type": "boolean",
+      "description": "True if any block or field fell back. The consuming agent should discount these answers or re-ask after updating."
+    },
+    "degraded_cards": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "card_ids the human answered while looking at an incomplete render."
+    },
+
+    "batch_id": { "type": "string" },
+    "session_id": {
+      "type": "string",
+      "description": "Echoed from source.session_id — how a waiting session recognizes its own answers."
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "complete": {
+      "type": "boolean",
+      "description": "Flipped by the Done button. What `guide wait` blocks on."
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer" },
+        "answered": { "type": "integer" }
+      }
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["card_id", "values"],
+        "additionalProperties": true,
+        "properties": {
+          "card_id": { "type": "string" },
+          "title": {
+            "type": "string",
+            "description": "Echoed from the batch so answers are readable alone."
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Echoed verbatim from the card."
+          },
+          "values": {
+            "type": "object",
+            "description": "Keyed by field id. Value type depends on the field type.",
+            "additionalProperties": true
+          },
+          "answered_at": { "type": "string", "format": "date-time" },
+          "degraded": {
+            "type": "boolean",
+            "description": "This specific card rendered incompletely."
+          }
+        }
+      }
+    }
+  }
+}

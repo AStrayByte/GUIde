@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AStrayByte/GUIde/schema/batch.schema.json",
+  "title": "GUIde batch",
+  "type": "object",
+  "required": ["guide_version", "id", "title", "cards"],
+  "additionalProperties": true,
+  "properties": {
+    "guide_version": {
+      "description": "major.minor.patch. MUST be the first key. Checked before any other parsing — see docs/versioning.md.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "id": {
+      "description": "ULID. Collision-free across concurrent sessions, sorts by creation time.",
+      "type": "string",
+      "minLength": 1
+    },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "instructions": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source": { "$ref": "#/$defs/source" },
+    "defaults": {
+      "type": "object",
+      "properties": { "response": { "$ref": "#/$defs/response" } }
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "cards": { "type": "array", "items": { "$ref": "#/$defs/card" } }
+  },
+
+  "$defs": {
+    "source": {
+      "description": "Provenance. With several agent sessions pushing to one inbox this is load-bearing, not decorative.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "agent": { "type": "string" },
+        "session_id": {
+          "type": "string",
+          "description": "Routes answers and per-card questions back to the session that asked."
+        },
+        "cwd": { "type": "string" },
+        "repo": { "type": "string" },
+        "branch": { "type": "string" },
+        "label": {
+          "type": "string",
+          "description": "Short name shown in the inbox rail."
+        }
+      }
+    },
+
+    "card": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } },
+        "response": { "$ref": "#/$defs/response" },
+        "meta": {
+          "description": "Opaque passthrough. Never interpreted by the renderer; echoed verbatim into answers.",
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "block": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Unknown types render as a labeled fallback that announces itself on the card — never a silent omission, never a crash.",
+          "examples": [
+            "text",
+            "callout",
+            "code",
+            "table",
+            "keyvalue",
+            "diff",
+            "json",
+            "image",
+            "columns"
+          ]
+        },
+        "label": { "type": "string" },
+        "collapsed": { "type": "boolean", "default": false },
+
+        "text": { "type": "string" },
+        "format": { "enum": ["plain", "pre", "markdown"] },
+
+        "footnote": { "type": "string" },
+        "tone": { "enum": ["info", "warn", "bad", "good", "mute"] },
+
+        "code": { "type": "string" },
+        "language": { "type": "string" },
+
+        "columns": {
+          "description": "Column names for type=table; nested panes for type=columns.",
+          "type": "array"
+        },
+        "rows": { "type": "array", "items": { "type": "object" } },
+        "note": { "type": "string" },
+        "truncated": { "type": "boolean" },
+
+        "pairs": { "type": "object", "additionalProperties": true },
+        "diff": { "type": "string" },
+        "value": {},
+        "src": { "type": "string" },
+        "alt": { "type": "string" },
+        "caption": { "type": "string" }
+      }
+    },
+
+    "response": {
+      "type": "object",
+      "required": ["fields"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": { "type": "string" },
+        "fields": { "type": "array", "items": { "$ref": "#/$defs/field" } }
+      }
+    },
+
+    "field": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": [
+            "choice",
+            "compare",
+            "text",
+            "rating",
+            "multichoice",
+            "boolean"
+          ]
+        },
+        "label": { "type": "string" },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "A required field the viewer cannot render blocks its card from being answered. Better a stuck card than a silently skipped one."
+        },
+        "options": { "type": "array", "items": { "$ref": "#/$defs/option" } },
+        "multiline": { "type": "boolean" },
+        "placeholder": { "type": "string" },
+        "max_length": { "type": "integer" },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "labels": { "type": "array", "items": { "type": "string" } },
+        "true_label": { "type": "string" },
+        "false_label": { "type": "string" }
+      }
+    },
+
+    "option": {
+      "type": "object",
+      "required": ["value", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "string" },
+        "label": { "type": "string" },
+        "tone": { "enum": ["info", "warn", "bad", "good", "mute"] },
+        "key": {
+          "type": "string",
+          "maxLength": 1,
+          "description": "Keyboard shortcut"
+        }
+      }
+    },
+
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "progress": { "type": "boolean", "default": true },
+        "counters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "field", "equals"],
+            "properties": {
+              "label": { "type": "string" },
+              "field": { "type": "string" },
+              "equals": { "type": "string" }
+            }
+          }
+        },
+        "rates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "field", "numerator", "denominator"],
+            "properties": {
+              "label": { "type": "string" },
+              "field": { "type": "string" },
+              "numerator": { "type": "array", "items": { "type": "string" } },
+              "denominator": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

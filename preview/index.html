@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde — preview</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <nav class="rail">
+        <div class="brand">
+          <b>GU<i>I</i>de</b>
+          <span>127.0.0.1:7777</span>
+        </div>
+        <div id="rail-body"></div>
+        <div class="rail-foot">
+          <span>mock</span>
+          <button id="themeBtn" title="Toggle theme">light</button>
+          <button id="resetBtn" title="Clear all answers">reset</button>
+        </div>
+      </nav>
+
+      <main class="main">
+        <div class="wrap" id="wrap"></div>
+      </main>
+    </div>
+
+    <script src="batches.js"></script>
+    <script src="render.js"></script>
+  </body>
+</html>
