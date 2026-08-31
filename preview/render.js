@@ -79,6 +79,11 @@ function el(tag, attrs, ...kids) {
   return n;
 }
 
+/* Native replaceChildren() stringifies a falsy child into the text "false",
+   unlike el(), which skips it. Everything that fills a container goes through
+   here so a `cond && el(...)` that comes out false disappears instead. */
+const fill = (node, ...kids) => node.replaceChildren(...kids.flat().filter(Boolean));
+
 const esc = (s) =>
   String(s).replace(
     /[&<>"]/g,
@@ -640,7 +645,7 @@ function paintProgress() {
   const count = (spec) =>
     vals.filter((v) => v[spec.field] === spec.equals).length;
 
-  host.replaceChildren(
+  fill(host, 
     el(
       "div",
       { class: "stat" },
@@ -720,7 +725,7 @@ function paintRail() {
     ...state.done,
   ];
 
-  host.replaceChildren(
+  fill(host, 
     el(
       "div",
       { class: "rail-head" },
@@ -782,7 +787,7 @@ function paintRail() {
 function paintCards() {
   const batch = active();
   const host = document.getElementById("cards");
-  host.replaceChildren(...batch.cards.map((c, i) => renderCard(c, i, batch)));
+  fill(host, ...batch.cards.map((c, i) => renderCard(c, i, batch)));
   paintProgress();
 }
 
@@ -792,7 +797,7 @@ function paintAll() {
   const gate = versionCheck(batch);
 
   if (gate.gate === "hard") {
-    wrap.replaceChildren(
+    fill(wrap, 
       el(
         "div",
         { class: "gate" },
@@ -830,7 +835,7 @@ function paintAll() {
     return;
   }
 
-  wrap.replaceChildren(
+  fill(wrap, 
     gate.gate === "warn" &&
       el(
         "div",

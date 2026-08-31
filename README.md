@@ -49,6 +49,42 @@ well enough to obviously be a tool rather than a file.
 Everything runs on your machine. No accounts, no hosting, no shared server, no auth.
 Nobody gets a link — they install it and run their own copy for their own agents.
 
+## What it looks like
+
+A clickable mock lives in [preview/](preview/) — open `preview/index.html`, no server and
+no build step. The sample batches are deliberately ridiculous; the point is the shape,
+not the subject.
+
+![The inbox and a batch in progress](docs/images/inbox.png)
+
+Several agent sessions push into one inbox. The left rail groups by repo and survives
+the sessions that filled it. The header counters and the false-alarm rate are declared
+by the batch — the renderer doesn't know what a "cried wolf" is.
+
+![One card: evidence, then the buttons](docs/images/card.png)
+
+One judgment per card, with the evidence needed to make it. Bulky data collapses behind
+one line, so cards stay scannable. Every card in this batch shares a single
+`defaults.response` declaration rather than repeating it eight times.
+
+![Degrading loudly on unsupported content](docs/images/degraded.png)
+
+When the viewer meets something it can't draw, it says so **on the card where it
+happened** and hands you the raw JSON. An unsupported *required* field blocks its card
+outright — better an obviously-stuck card than a silently skipped one.
+
+![Refusing a batch from a newer GUIde](docs/images/version-gate.png)
+
+A version mismatch it can't handle safely is refused rather than half-rendered. A
+silently degraded review means someone judges on evidence they can't see, and an agent
+acts on that judgment.
+
+![The answers file](docs/images/answers.png)
+
+What goes back to Claude. `title` and `meta` are echoed verbatim so the answers file is
+actionable without the original batch in context, and `degraded` tells the agent whether
+to trust it.
+
 ## Status
 
 Design phase, nothing built. Read in order:

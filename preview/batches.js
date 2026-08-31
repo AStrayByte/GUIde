@@ -1,6 +1,12 @@
-/* GUIde — preview mock: sample batches.                                        */
-/* ALL DATA HERE IS SYNTHETIC. Loaded as a script (not fetched) so the mock      */
-/* opens over file:// with no server, exactly like the real single-file path.    */
+/* GUIde — preview mock: sample batches.
+ *
+ * ALL DATA HERE IS SYNTHETIC AND EXTREMELY SILLY ON PURPOSE. Loaded as a script
+ * (not fetched) so the mock opens over file:// with no server, exactly like the
+ * real single-file path.
+ *
+ * Between them these five batches exercise every block type, every field type,
+ * the loud-degrade fallback, and the hard version gate.
+ */
 
 window.VIEWER_VERSION = "0.1.0";
 
@@ -9,10 +15,10 @@ window.BATCHES = [
   {
     guide_version: "0.1.0",
     id: "01JQ8FQ2X7K3M9VB4H0TZC5RWD",
-    title: "Verifier triage",
-    subtitle: "Was the checker right to complain?",
+    title: "Power-scaling triage",
+    subtitle: "The lore checker filed 8 complaints. Was it right?",
     instructions:
-      "For each complaint: was the answer actually fine (the checker cried wolf), or was it genuinely wrong (a real catch)? Progress saves continuously — there is no Save button.",
+      "A bot checks every power-scaling claim against on-screen feats. For each complaint: did the answer actually hold up (the bot cried wolf), or is it a genuine lore violation? Progress saves continuously — there is no Save button.",
     created_at: "2026-08-31T14:02:00Z",
     source: {
       agent: "claude-code",
@@ -20,11 +26,11 @@ window.BATCHES = [
       cwd: "/Users/you/dev/search-api",
       repo: "search-api",
       branch: "eval-tooling",
-      label: "verifier triage",
+      label: "power-scaling triage",
     },
     defaults: {
       response: {
-        prompt: "Your verdict",
+        prompt: "Your ruling",
         fields: [
           {
             id: "verdict",
@@ -33,17 +39,22 @@ window.BATCHES = [
             options: [
               {
                 value: "false_alarm",
-                label: "✓ False alarm — answer was fine",
+                label: "✓ Bot cried wolf — answer was fine",
                 tone: "good",
                 key: "1",
               },
               {
                 value: "good_catch",
-                label: "✗ Good catch — answer was wrong",
+                label: "✗ Real violation — answer was wrong",
                 tone: "bad",
                 key: "2",
               },
-              { value: "unsure", label: "? Not sure", tone: "mute", key: "3" },
+              {
+                value: "unsure",
+                label: "? Ask the fandom",
+                tone: "mute",
+                key: "3",
+              },
             ],
           },
           {
@@ -59,18 +70,23 @@ window.BATCHES = [
       progress: true,
       counters: [
         {
-          label: "false alarms",
+          label: "cried wolf",
           field: "verdict",
           equals: "false_alarm",
           tone: "good",
         },
         {
-          label: "good catches",
+          label: "real violations",
           field: "verdict",
           equals: "good_catch",
           tone: "bad",
         },
-        { label: "unsure", field: "verdict", equals: "unsure", tone: "mute" },
+        {
+          label: "ask the fandom",
+          field: "verdict",
+          equals: "unsure",
+          tone: "mute",
+        },
       ],
       rates: [
         {
@@ -84,123 +100,117 @@ window.BATCHES = [
     cards: [
       {
         id: "1",
-        title: "Chart widget sales by region",
-        tags: ["numeric_faithfulness", "run 78"],
-        meta: { run: 78, check: "numeric_faithfulness" },
+        title: "Could Aang beat Superman in a fight?",
+        tags: ["cross_franchise", "run 78"],
+        meta: { run: 78, check: "cross_franchise" },
         blocks: [
           {
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: "Every number in the answer must be traceable to the data rows — a value, a total, an average, or a difference of two of them. This fires when one isn't.",
+            text: "Every power-scaling claim must be traceable to an on-screen feat. A cross-franchise comparison needs at least one feat from each side, measured in comparable units. This fires when one side is doing vibes.",
             footnote:
-              "stated percent 31% in answer has no recoverable base/final total pair to verify against",
+              "claim 'Aang takes it' rests on 0 comparable feats · 'the Avatar State is basically a god' is not a unit",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "Here's the breakdown of widget sales by region:\n\n- **North:** 37 units [1]\n- **South:** 68 units [1]\n- **Unassigned:** 13 units [1]\n\nOut of **118 total units**, North accounts for roughly **31%** of sales, with the majority (58%) in South and a small group (11%) unassigned. [1]",
+            text: "Great question! Aang would **almost certainly win**. [1]\n\nHe has access to all four elements, the Avatar State, and — critically — **energybending**, which lets him remove someone's bending entirely. Superman's powers are basically bending if you squint, so Aang could just switch him off.\n\nAlso Aang can fly and Superman is weak to rocks.",
           },
           {
             type: "table",
-            label: "The data the agent actually had — 3 rows",
+            label: "The feats the agent actually had — 4 rows",
             collapsed: true,
-            columns: ["sales.count", "sales.region"],
+            columns: ["character", "feat", "source", "comparable"],
             rows: [
-              { "sales.count": 68, "sales.region": "south" },
-              { "sales.count": 37, "sales.region": "north" },
-              { "sales.count": 13, "sales.region": null },
+              {
+                character: "Aang",
+                feat: "raised an island",
+                source: "Book 3",
+                comparable: true,
+              },
+              {
+                character: "Aang",
+                feat: "removed Ozai's bending",
+                source: "Book 3",
+                comparable: false,
+              },
+              {
+                character: "Superman",
+                feat: "moved a planet",
+                source: "n/a — not in corpus",
+                comparable: null,
+              },
+              {
+                character: "Superman",
+                feat: "weak to kryptonite",
+                source: "n/a — not in corpus",
+                comparable: null,
+              },
             ],
+            note: "'Superman is weak to rocks' is a load-bearing simplification",
           },
         ],
       },
       {
         id: "2",
-        title: "How did revenue trend last quarter?",
-        tags: ["trend_guard", "run 91"],
-        meta: { run: 91, check: "trend_guard" },
+        title: "Is Batman a metahuman?",
+        tags: ["ability_ledger", "run 78"],
+        meta: { run: 78, check: "ability_ledger" },
         blocks: [
           {
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: 'A directional claim ("up", "down", "growing") needs at least two comparable periods in the data. This fires when the answer asserts a trend from a single point.',
+            text: "Any ability attributed to a character must appear in that character's ability ledger. Invented abilities are how a wiki answer quietly becomes fan fiction.",
             footnote:
-              "answer claims 'steady growth' but result set contains one period",
+              "ability 'prep time' not found in ledger · nearest match: 'planning (non-superhuman)'",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "Revenue for Q3 came in at **$412,000** [1], continuing the steady growth we've seen through the year.",
+            text: "No — Batman has **no metahuman abilities**. [1] He relies entirely on training, technology, and **prep time**, which is technically a superpower if you think about it.",
           },
           {
             type: "table",
-            label: "The data the agent actually had — 1 row",
+            label: "Ability ledger — 5 rows",
             collapsed: true,
-            columns: ["revenue.total", "revenue.quarter"],
-            rows: [{ "revenue.total": 412000, "revenue.quarter": "2026-Q3" }],
-          },
-        ],
-      },
-      {
-        id: "3",
-        title: "List the top five accounts by open tickets",
-        tags: ["citation_coverage", "run 78"],
-        meta: { run: 78, check: "citation_coverage" },
-        blocks: [
-          {
-            type: "callout",
-            label: "Why this check exists",
-            tone: "warn",
-            text: "Every factual sentence must carry a [n] citation pointing at a result set. Uncited claims are where hallucinations hide.",
-            footnote: "3 of 7 sentences carry no citation marker",
-          },
-          {
-            type: "text",
-            label: "The answer it complained about",
-            format: "pre",
-            text: "The five busiest accounts are Northwind (42 open), Contoso (38), Fabrikam (31), Tailspin (27) and Wingtip (22). [1]\n\nNorthwind's volume is unusual for an account of its size. It may be worth a check-in from the account team. Ticket volume tends to spike after a migration.",
-          },
-          {
-            type: "table",
-            label: "Result set [1] — 5 rows",
-            collapsed: true,
-            columns: ["account.name", "tickets.open", "account.seats"],
+            columns: ["ability", "metahuman", "first appearance"],
             rows: [
               {
-                "account.name": "Northwind",
-                "tickets.open": 42,
-                "account.seats": 60,
+                ability: "peak human conditioning",
+                metahuman: false,
+                "first appearance": "1939",
               },
               {
-                "account.name": "Contoso",
-                "tickets.open": 38,
-                "account.seats": 340,
+                ability: "detective skill",
+                metahuman: false,
+                "first appearance": "1939",
               },
               {
-                "account.name": "Fabrikam",
-                "tickets.open": 31,
-                "account.seats": 210,
+                ability: "planning (non-superhuman)",
+                metahuman: false,
+                "first appearance": "1940",
               },
               {
-                "account.name": "Tailspin",
-                "tickets.open": 27,
-                "account.seats": 95,
+                ability: "budget",
+                metahuman: null,
+                "first appearance": "1939",
               },
               {
-                "account.name": "Wingtip",
-                "tickets.open": 22,
-                "account.seats": 150,
+                ability: "prep time",
+                metahuman: null,
+                "first appearance": "not found",
               },
             ],
           },
         ],
       },
       {
-        id: "4",
-        title: "What's the average deal size this year?",
+        id: "3",
+        title: "Who's faster, Quicksilver or the Flash?",
         tags: ["numeric_faithfulness", "run 91"],
         meta: { run: 91, check: "numeric_faithfulness" },
         blocks: [
@@ -208,160 +218,188 @@ window.BATCHES = [
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: "Every number in the answer must be traceable to the data rows.",
+            text: "Every number in the answer must be traceable to the data rows — a value, a total, an average, or a difference of two of them. This fires when one isn't.",
             footnote:
-              "stated average 24,500 not reproducible from returned rows (computed 24,483.33)",
+              "stated '400% faster' has no recoverable base/final pair · rows give 1.2c and 3.1c, a 158% difference",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "The average deal size so far this year is about **$24,500** across 6 closed deals. [1]",
+            text: "The Flash, comfortably. He's roughly **400% faster** than Quicksilver [1], and he can also run so fast he goes back in time, which Quicksilver has only managed in a kitchen.",
           },
           {
             type: "table",
-            label: "Result set [1] — 6 rows",
+            label: "Top recorded speed — 2 rows",
             collapsed: true,
-            columns: ["deal.id", "deal.amount", "deal.closed_at"],
+            columns: ["character", "top_speed_c", "franchise"],
             rows: [
               {
-                "deal.id": "D-1041",
-                "deal.amount": 18000,
-                "deal.closed_at": "2026-02-11",
+                character: "Quicksilver",
+                top_speed_c: 1.2,
+                franchise: "Marvel",
               },
-              {
-                "deal.id": "D-1055",
-                "deal.amount": 31500,
-                "deal.closed_at": "2026-03-02",
-              },
-              {
-                "deal.id": "D-1067",
-                "deal.amount": 22400,
-                "deal.closed_at": "2026-04-19",
-              },
-              {
-                "deal.id": "D-1088",
-                "deal.amount": 27900,
-                "deal.closed_at": "2026-05-30",
-              },
-              {
-                "deal.id": "D-1102",
-                "deal.amount": 19600,
-                "deal.closed_at": "2026-06-22",
-              },
-              {
-                "deal.id": "D-1119",
-                "deal.amount": 27500,
-                "deal.closed_at": "2026-07-08",
-              },
+              { character: "The Flash", top_speed_c: 3.1, franchise: "DC" },
             ],
-            note: "mean = 24,483.33 · the answer rounded to 24,500",
+            note: "3.1 / 1.2 = 2.58× · the answer said 5×",
+          },
+        ],
+      },
+      {
+        id: "4",
+        title: "Can Toph read the scroll?",
+        tags: ["null_handling", "run 91"],
+        meta: { run: 91, check: "null_handling" },
+        blocks: [
+          {
+            type: "callout",
+            label: "Why this check exists",
+            tone: "warn",
+            text: "Rows with null attribute values must be surfaced, not silently folded into a default. This fires when the answer assumes a value the data doesn't carry.",
+            footnote: "toph.vision = null was read as 'normal'",
+          },
+          {
+            type: "text",
+            label: "The answer it complained about",
+            format: "pre",
+            text: "Yes — Toph reads the scroll aloud to the group and identifies the seal immediately. [1]",
+          },
+          {
+            type: "table",
+            label: "Character attributes — 3 rows",
+            collapsed: true,
+            columns: ["character", "vision", "seismic_sense"],
+            rows: [
+              { character: "Katara", vision: "normal", seismic_sense: false },
+              { character: "Sokka", vision: "normal", seismic_sense: false },
+              { character: "Toph", vision: null, seismic_sense: true },
+            ],
+            note: "null here means blind, not unknown. The schema has been arguing about this since Book 2.",
           },
         ],
       },
       {
         id: "5",
-        title: "Which regions are underperforming?",
-        tags: ["unsupported_judgment", "run 104"],
-        meta: { run: 104, check: "unsupported_judgment" },
+        title: "How many elements has Aang mastered?",
+        tags: ["numeric_faithfulness", "run 104"],
+        meta: { run: 104, check: "numeric_faithfulness" },
         blocks: [
           {
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: 'An evaluative word ("underperforming", "poor", "healthy") implies a threshold. If no threshold is in the data or the question, the model invented one.',
+            text: "Every number in the answer must be traceable to the data rows.",
             footnote:
-              "'underperforming' applied without a target or benchmark in scope",
+              "stated count 4 not reproducible from returned rows (mastered = true on 3)",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "**West** and **Central** are underperforming, at 12 and 15 units respectively against a company average of 29.5. [1]",
+            text: "By the end of Book 2, Aang has mastered **all four elements**. [1]",
           },
           {
             type: "table",
-            label: "Result set [1] — 4 rows",
+            label: "Bending progress at end of Book 2 — 4 rows",
             collapsed: true,
-            columns: ["region", "units"],
+            columns: ["element", "mastered", "teacher"],
             rows: [
-              { region: "east", units: 54 },
-              { region: "north", units: 37 },
-              { region: "central", units: 15 },
-              { region: "west", units: 12 },
+              { element: "air", mastered: true, teacher: "Monk Gyatso" },
+              { element: "water", mastered: true, teacher: "Katara" },
+              { element: "earth", mastered: true, teacher: "Toph" },
+              { element: "fire", mastered: false, teacher: null },
             ],
+            note: "mastered = true on 3 of 4 · fire has no teacher assigned yet",
           },
         ],
       },
       {
         id: "6",
-        title: "Summarise this quarter's churn",
-        tags: ["null_handling", "run 104"],
-        meta: { run: 104, check: "null_handling" },
+        title: "Is this the same Groot?",
+        tags: ["citation_coverage", "run 104"],
+        meta: { run: 104, check: "citation_coverage" },
         blocks: [
           {
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: "Rows with null grouping keys must be surfaced, not silently folded into a bucket or dropped from a total.",
-            footnote:
-              "2 rows with churn.reason = null omitted from the narrative",
+            text: "Every factual sentence must carry a [n] citation pointing at a result set. Uncited claims are where the hallucinations hide.",
+            footnote: "4 of 6 sentences carry no citation marker",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "Nine accounts churned this quarter. The reasons were **price** (5) and **missing features** (4). [1]",
+            text: "Technically no. The original Groot died and the one we see afterwards grew from a cutting. [1]\n\nSo he's more of a son than a resurrection. Marvel has been fairly consistent about this. Most fans disagree. The Russo brothers have said different things in different interviews, which doesn't help.",
           },
           {
             type: "table",
-            label: "Result set [1] — 4 rows",
+            label: "Result set [1] — 3 rows",
             collapsed: true,
-            columns: ["churn.reason", "churn.count"],
+            columns: ["entity", "status", "continuity_note"],
             rows: [
-              { "churn.reason": "price", "churn.count": 5 },
-              { "churn.reason": "missing_features", "churn.count": 4 },
-              { "churn.reason": null, "churn.count": 2 },
-              { "churn.reason": "", "churn.count": 0 },
+              {
+                entity: "Groot (original)",
+                status: "deceased",
+                continuity_note: "Vol. 1",
+              },
+              {
+                entity: "Groot (sapling)",
+                status: "active",
+                continuity_note: "grown from cutting",
+              },
+              {
+                entity: "Groot (teen)",
+                status: "active",
+                continuity_note: "same sapling, later",
+              },
             ],
-            note: "11 accounts total, not 9",
           },
         ],
       },
       {
         id: "7",
-        title: "Compare Q2 and Q3 headcount",
-        tags: ["trend_guard", "run 118"],
-        meta: { run: 118, check: "trend_guard" },
+        title: "How many Robins have there been?",
+        tags: ["unsupported_judgment", "run 118"],
+        meta: { run: 118, check: "unsupported_judgment" },
         blocks: [
           {
             type: "callout",
             label: "Why this check exists",
             tone: "warn",
-            text: "A directional claim needs at least two comparable periods in the data.",
-            footnote: "two periods present — flagged on phrasing, not on data",
+            text: 'An evaluative word ("main", "real", "proper") implies a threshold. If no threshold is in the data or in the question, the model invented one.',
+            footnote: "'the real ones' applied without a canon filter in scope",
           },
           {
             type: "text",
             label: "The answer it complained about",
             format: "pre",
-            text: "Headcount grew from **84** in Q2 to **91** in Q3 — an increase of 7 (8.3%). [1]",
+            text: "There have been **five** Robins, if you only count the real ones. [1] I'm not counting the ones from alternate continuities, or the one that was a duck.",
           },
           {
             type: "table",
-            label: "Result set [1] — 2 rows",
+            label: "Result set [1] — 5 rows",
             collapsed: true,
-            columns: ["headcount", "quarter"],
+            columns: ["robin", "years", "continuity"],
             rows: [
-              { headcount: 84, quarter: "2026-Q2" },
-              { headcount: 91, quarter: "2026-Q3" },
+              { robin: "Dick Grayson", years: "1940–1984", continuity: "main" },
+              { robin: "Jason Todd", years: "1983–1988", continuity: "main" },
+              { robin: "Tim Drake", years: "1989–2009", continuity: "main" },
+              {
+                robin: "Stephanie Brown",
+                years: "2004–2005",
+                continuity: "main",
+              },
+              { robin: "Damian Wayne", years: "2009–", continuity: "main" },
             ],
+            truncated: true,
+            note: "showing 5 of 11 rows · 6 rows filtered out by an undeclared continuity filter",
           },
         ],
       },
       {
         id: "8",
-        title: "Show me pipeline by stage",
+        title: "Summarise the Fire Nation's line of succession",
         tags: ["citation_coverage", "run 118"],
         meta: { run: 118, check: "citation_coverage" },
         blocks: [
@@ -377,7 +415,7 @@ window.BATCHES = [
             type: "text",
             label: "The answer it complained about",
             format: "markdown",
-            text: "Here's the current pipeline by stage:\n\n| Stage | Deals | Value |\n| --- | --- | --- |\n| Discovery | 14 | $310k |\n| Proposal | 9 | $482k |\n| Negotiation | 4 | $265k |\n\nNegotiation is the thinnest stage right now. [1]",
+            text: "Here's the Fire Nation succession, most recent last:\n\n| Fire Lord | Reign | Notable for |\n| --- | --- | --- |\n| Sozin | 82 years | Started it |\n| Azulon | 51 years | Continued it |\n| Ozai | 6 years | Peak of it |\n| Zuko | ongoing | Apologising for it |\n\nZuko's reign is the only one that begins with a formal apology. [1]",
           },
           {
             type: "keyvalue",
@@ -385,9 +423,10 @@ window.BATCHES = [
             collapsed: true,
             pairs: [
               { key: "run", value: "118" },
-              { key: "model", value: "answer-agent v2.3" },
+              { key: "model", value: "lore-agent v2.3" },
               { key: "latency", value: "4.1s" },
               { key: "result sets", value: "1" },
+              { key: "honour", value: "restored" },
             ],
           },
         ],
@@ -399,10 +438,11 @@ window.BATCHES = [
   {
     guide_version: "0.1.0",
     id: "01JQ8FT7B2N4P0WC5J1UAD6XKE",
-    title: "Regression cases",
-    subtitle: "Behaviour changed between v2.2 and v2.3 — intended or not?",
+    title: "Canon drift",
+    subtitle:
+      "The summariser's output changed between v2.2 and v2.3 — intended or not?",
     instructions:
-      "Each card is a case whose output changed after the prompt rewrite. Mark whether the new behaviour is what you want, and tag what drove it.",
+      "Each card is a lore summary whose wording changed after the prompt rewrite. Mark whether the new version is what you want, and tag what you think drove it.",
     created_at: "2026-08-31T14:40:00Z",
     source: {
       agent: "claude-code",
@@ -410,11 +450,11 @@ window.BATCHES = [
       cwd: "/Users/you/dev/search-api",
       repo: "search-api",
       branch: "eval-tooling",
-      label: "regression cases",
+      label: "canon drift",
     },
     defaults: {
       response: {
-        prompt: "Is the new behaviour correct?",
+        prompt: "Is the new version correct?",
         fields: [
           {
             id: "accept",
@@ -431,6 +471,7 @@ window.BATCHES = [
               { value: "schema", label: "Schema change" },
               { value: "model", label: "Model version" },
               { value: "flaky", label: "Non-deterministic" },
+              { value: "retcon", label: "Honestly? A retcon" },
             ],
           },
           {
@@ -452,41 +493,45 @@ window.BATCHES = [
     cards: [
       {
         id: "r1",
-        title: "Empty result set now returns a sentence, not a table",
-        tags: ["case 07", "output shape"],
-        meta: { case: "07", suite: "empty-results" },
+        title: "Iroh's tea advice lost the tea",
+        tags: ["case 07", "voice"],
+        meta: { case: "07", suite: "voice" },
         blocks: [
           {
             type: "diff",
             label: "v2.2 → v2.3",
-            diff: "@@ answer @@\n-| Region | Units |\n-| --- | --- |\n-_(no rows)_\n+No sales records matched that filter. [1]",
+            diff: "@@ summary @@\n-Iroh advises Zuko to slow down, and offers him jasmine tea. [1]\n-The tea is doing a lot of narrative work here.\n+Iroh provides emotional support to Zuko. [1]",
           },
           {
             type: "keyvalue",
             label: "Case",
             pairs: [
-              { key: "question", value: "Sales in Antarctica?" },
-              { key: "rows returned", value: "0" },
+              {
+                key: "question",
+                value: "What does Iroh tell Zuko in the tea shop?",
+              },
+              { key: "rows returned", value: "3" },
               { key: "first seen", value: "run 112" },
+              { key: "tea mentioned", value: "no (was: yes)" },
             ],
           },
         ],
       },
       {
         id: "r2",
-        title: "Currency symbol dropped from totals",
-        tags: ["case 12", "formatting"],
-        meta: { case: "12", suite: "formatting" },
+        title: "The snap now affects a different denominator",
+        tags: ["case 12", "numbers"],
+        meta: { case: "12", suite: "numbers" },
         blocks: [
           {
             type: "diff",
             label: "v2.2 → v2.3",
-            diff: "@@ answer @@\n-Total contract value: **$1,240,000** [1]\n+Total contract value: **1240000** [1]",
+            diff: "@@ summary @@\n-Thanos eliminated **half of all living things** in the universe. [1]\n+Thanos eliminated **half of all people**. [1]",
           },
           {
             type: "callout",
             tone: "bad",
-            text: "Formatting regressions are cheap to miss and expensive in a customer-facing answer.",
+            text: "This one is not a formatting nit. 'All living things' and 'all people' differ by roughly every plant, and the fandom will absolutely notice.",
           },
         ],
       },
@@ -499,46 +544,70 @@ window.BATCHES = [
           {
             type: "diff",
             label: "v2.2 → v2.3",
-            diff: "@@ answer @@\n-North sold 37 units. [1] South sold 68. [1]\n+North sold 37 units. South sold 68.\n+\n+[1]",
+            diff: "@@ summary @@\n-Zuko joins the team in Book 3. [1] Katara forgives him last. [1]\n+Zuko joins the team in Book 3. Katara forgives him last.\n+\n+[1]",
           },
         ],
       },
       {
         id: "r4",
-        title: "Null grouping key now labelled 'Unassigned' instead of blank",
+        title: "Unnamed past Avatar now labelled 'Avatar Yangchen'",
         tags: ["case 23", "null handling"],
         meta: { case: "23", suite: "nulls" },
         blocks: [
           {
             type: "diff",
             label: "v2.2 → v2.3",
-            diff: "@@ answer @@\n-| (blank) | 13 |\n+| Unassigned | 13 |",
+            diff: "@@ summary @@\n-| (unnamed air nomad avatar) | ~350 BG |\n+| Avatar Yangchen | ~350 BG |",
           },
           {
             type: "callout",
             tone: "good",
-            text: "This one looks like a deliberate improvement from the prompt rewrite — confirming so it stops showing up as a diff.",
+            text: "This looks like a deliberate improvement from the prompt rewrite — confirming it so it stops surfacing as a diff every run.",
           },
         ],
       },
       {
         id: "r5",
-        title: "Answer length grew ~40% on comparison questions",
+        title: "Answers to 'who would win' grew ~40% longer",
         tags: ["case 31", "verbosity"],
         meta: { case: "31", suite: "verbosity" },
         blocks: [
           {
             type: "table",
-            label: "Token counts across 8 comparison cases",
-            columns: ["case", "v2.2", "v2.3", "delta"],
+            label: "Token counts across 8 versus-question cases",
+            columns: ["case", "matchup", "v2.2", "v2.3", "delta"],
             rows: [
-              { case: "31a", "v2.2": 128, "v2.3": 181, delta: "+41%" },
-              { case: "31b", "v2.2": 96, "v2.3": 142, delta: "+48%" },
-              { case: "31c", "v2.2": 155, "v2.3": 199, delta: "+28%" },
-              { case: "31d", "v2.2": 110, "v2.3": 168, delta: "+53%" },
+              {
+                case: "31a",
+                matchup: "Thor vs Superman",
+                "v2.2": 128,
+                "v2.3": 181,
+                delta: "+41%",
+              },
+              {
+                case: "31b",
+                matchup: "Azula vs Zuko",
+                "v2.2": 96,
+                "v2.3": 142,
+                delta: "+48%",
+              },
+              {
+                case: "31c",
+                matchup: "Hulk vs Doomsday",
+                "v2.2": 155,
+                "v2.3": 199,
+                delta: "+28%",
+              },
+              {
+                case: "31d",
+                matchup: "Appa vs Falkor",
+                "v2.2": 110,
+                "v2.3": 168,
+                delta: "+53%",
+              },
             ],
             truncated: true,
-            note: "showing 4 of 8 rows",
+            note: "showing 4 of 8 rows · the Appa one got genuinely heated",
           },
         ],
       },
@@ -549,8 +618,8 @@ window.BATCHES = [
   {
     guide_version: "0.1.0",
     id: "01JQ8FZK9M6R2TXH8B3EQY7NVP",
-    title: "API doc gaps",
-    subtitle: "Which of these undocumented endpoints matter?",
+    title: "Bending API doc gaps",
+    subtitle: "Which of these undocumented endpoints actually matter?",
     instructions:
       "The doc generator found endpoints with no description. Rate how badly each one needs writing up, and say who it's for.",
     created_at: "2026-08-31T15:05:00Z",
@@ -601,52 +670,52 @@ window.BATCHES = [
     cards: [
       {
         id: "d1",
-        title: "POST /v1/batches/:id/reopen",
-        tags: ["no description", "3 callers"],
-        meta: { path: "/v1/batches/:id/reopen", callers: 3 },
+        title: "POST /v1/benders/:id/bloodbend",
+        tags: ["no description", "3 callers", "ethically fraught"],
+        meta: { path: "/v1/benders/:id/bloodbend", callers: 3 },
         blocks: [
           {
             type: "code",
             label: "Handler",
             language: "typescript",
-            code: "router.post('/v1/batches/:id/reopen', async (req, res) => {\n  const batch = await store.get(req.params.id)\n  if (!batch) return res.status(404).end()\n  batch.complete = false\n  await store.put(batch)\n  res.json({ ok: true })\n})",
+            code: "router.post('/v1/benders/:id/bloodbend', requireFullMoon, async (req, res) => {\n  const bender = await store.get(req.params.id)\n  if (!bender) return res.status(404).end()\n  if (bender.element !== 'water') return res.status(403).json({ error: 'wrong element' })\n  await bender.assertControl(req.body.target)\n  res.json({ ok: true, regrets: 1 })\n})",
           },
           {
             type: "text",
             format: "markdown",
-            text: "Flips `complete` back to `false`. Undocumented, and it's the only way to undo a Done click. See **open question 10** — the docs currently say re-run rather than reopen.",
+            text: "Gated behind `requireFullMoon`, which is the only middleware in the codebase that calls an **astronomy API**. Undocumented, three callers, and nobody can remember writing it.",
           },
         ],
       },
       {
         id: "d2",
-        title: "GET /v1/daemon/health",
+        title: "GET /v1/avatar/state",
         tags: ["no description", "0 callers"],
-        meta: { path: "/v1/daemon/health", callers: 0 },
+        meta: { path: "/v1/avatar/state", callers: 0 },
         blocks: [
           {
             type: "code",
             label: "Handler",
             language: "typescript",
-            code: "router.get('/v1/daemon/health', (_req, res) =>\n  res.json({ ok: true, uptime: process.uptime(), version: VERSION }))",
+            code: "router.get('/v1/avatar/state', (_req, res) =>\n  res.json({ active: false, glowing: false, pastLives: 9999, uptime: process.uptime() }))",
           },
           {
             type: "callout",
             tone: "mute",
-            text: "Nothing in the repo calls this. It may exist only for a smoke test that was deleted.",
+            text: "Nothing in the repo calls this. It may exist only for a smoke test that was deleted. `pastLives` is hardcoded, which feels like it should be somebody's problem.",
           },
         ],
       },
       {
         id: "d3",
-        title: "DELETE /v1/batches/:id",
-        tags: ["no description", "1 caller"],
-        meta: { path: "/v1/batches/:id", callers: 1 },
+        title: "DELETE /v1/nations/:id",
+        tags: ["no description", "1 caller", "irreversible"],
+        meta: { path: "/v1/nations/:id", callers: 1 },
         blocks: [
           {
             type: "text",
             format: "markdown",
-            text: "Backs `guide clean`. Deletes the batch directory outright — **no archive path**, which is the behaviour open question 5 is still arguing about.",
+            text: "Backs `guide clean`. Deletes the whole nation outright — **no archive path**, which is the behaviour open question 5 is still arguing about. Has been called exactly once, in 100 AG.",
           },
           {
             type: "json",
@@ -654,28 +723,30 @@ window.BATCHES = [
             collapsed: true,
             value: {
               deleted: true,
-              id: "01JQ8FQ2X7K3M9VB4H0TZC5RWD",
+              id: "air-nomads",
+              survivors: 1,
               freed_bytes: 48211,
+              reversible: false,
             },
           },
         ],
       },
       {
         id: "d4",
-        title: "GET /v1/batches?since=",
+        title: "GET /v1/spirits?since=",
         tags: ["partially documented", "6 callers"],
-        meta: { path: "/v1/batches", callers: 6 },
+        meta: { path: "/v1/spirits", callers: 6 },
         blocks: [
           {
             type: "text",
             format: "markdown",
-            text: "The endpoint is documented; the `since` parameter is not. It takes an **ISO-8601 timestamp** and is what the page's poll loop uses to notice a new arrival without refetching the world.",
+            text: "The endpoint is documented; the `since` parameter is not. It takes an **ISO-8601 timestamp** and is what the page's poll loop uses to notice a new spirit without refetching the entire Spirit World.",
           },
           {
             type: "code",
             label: "Example",
             language: "bash",
-            code: "curl '127.0.0.1:7777/v1/batches?since=2026-08-31T15:00:00Z'",
+            code: "curl '127.0.0.1:7777/v1/spirits?since=2026-08-31T15:00:00Z'",
           },
         ],
       },
@@ -686,10 +757,10 @@ window.BATCHES = [
   {
     guide_version: "0.1.0",
     id: "01JQ8G4D3V8W5YKN1C7FPS2MRB",
-    title: "Prompt A/B eval",
-    subtitle: "Two phrasings, identical data. Which ships?",
+    title: "Catchphrase A/B",
+    subtitle: "Two phrasings, identical scene. Which one ships?",
     instructions:
-      "Pick a winner and say how confident you are. Two cards here use content this viewer doesn't know how to draw — see how it degrades.",
+      "Pick a winner and say how confident you are. Two cards here use content this viewer doesn't know how to draw — that's deliberate, so you can see how it degrades.",
     created_at: "2026-08-31T15:20:00Z",
     source: {
       agent: "claude-code",
@@ -697,7 +768,7 @@ window.BATCHES = [
       cwd: "/Users/you/dev/report-gen",
       repo: "report-gen",
       branch: "prompt-tuning",
-      label: "prompt A/B",
+      label: "catchphrase A/B",
     },
     defaults: {
       response: {
@@ -740,7 +811,7 @@ window.BATCHES = [
     cards: [
       {
         id: "p1",
-        title: "Which phrasing of the revenue summary is better?",
+        title: "Which version of Iroh's advice lands better?",
         tags: ["prompt_ab", "run 104"],
         meta: {
           run: 104,
@@ -753,7 +824,7 @@ window.BATCHES = [
             type: "callout",
             tone: "info",
             label: "What you're deciding",
-            text: "Two prompt variants produced these summaries from identical data. Pick the one you'd rather ship.",
+            text: "Two prompt variants produced these lines from the same scene. Pick the one you'd rather ship.",
           },
           {
             type: "columns",
@@ -764,7 +835,7 @@ window.BATCHES = [
                   {
                     type: "text",
                     format: "pre",
-                    text: "Q3 revenue: **$412,000**, up 8.4% on Q2's $380,000. [1]",
+                    text: "Failure is a teacher. Drink your tea. [1]",
                   },
                 ],
               },
@@ -774,7 +845,7 @@ window.BATCHES = [
                   {
                     type: "text",
                     format: "pre",
-                    text: "Revenue climbed to **$412,000** in Q3 — an 8.4% gain over the $380,000 posted in Q2, and the third consecutive quarter of growth. [1]",
+                    text: "It is important to draw wisdom from many different places. If you take it from only one place, it becomes rigid and stale. Also, your tea is getting cold. [1]",
                   },
                 ],
               },
@@ -782,19 +853,28 @@ window.BATCHES = [
           },
           {
             type: "table",
-            label: "Source data — 2 rows",
+            label: "Source scene — 2 rows",
             collapsed: true,
-            columns: ["revenue.total", "revenue.quarter"],
+            columns: ["scene.id", "scene.location", "tea.temp_c"],
             rows: [
-              { "revenue.total": 380000, "revenue.quarter": "2026-Q2" },
-              { "revenue.total": 412000, "revenue.quarter": "2026-Q3" },
+              {
+                "scene.id": "S3E12",
+                "scene.location": "Ba Sing Se tea shop",
+                "tea.temp_c": 71,
+              },
+              {
+                "scene.id": "S3E12",
+                "scene.location": "Ba Sing Se tea shop",
+                "tea.temp_c": 43,
+              },
             ],
+            note: "the second row is 20 minutes later, which is arguably the whole point",
           },
         ],
       },
       {
         id: "p2",
-        title: "Which error message is clearer?",
+        title: "Which villain monologue is clearer?",
         tags: ["prompt_ab", "run 106"],
         meta: { run: 106, check: "prompt_ab" },
         blocks: [
@@ -807,7 +887,7 @@ window.BATCHES = [
                   {
                     type: "text",
                     format: "pre",
-                    text: "No rows matched. Try widening the date range.",
+                    text: "I am inevitable.",
                   },
                 ],
               },
@@ -817,7 +897,7 @@ window.BATCHES = [
                   {
                     type: "text",
                     format: "pre",
-                    text: "That filter returned nothing between 2026-01-01 and 2026-03-31. The earliest record in this dataset is 2026-04-02.",
+                    text: "Given current population growth against finite resources, and having modelled this across 14,000,605 outcomes, I have concluded that a 50% reduction — applied uniformly and at random — is the only sustainable intervention. I am, in this specific and load-bearing sense, inevitable.",
                   },
                 ],
               },
@@ -826,25 +906,25 @@ window.BATCHES = [
           {
             /* Unknown block type — the viewer must degrade loudly, per versioning.md */
             type: "timeline",
-            label: "Response latency across the run",
+            label: "Dramatic pause length across the run",
             events: [
-              { at: "0ms", what: "query parsed" },
-              { at: "180ms", what: "rows fetched" },
-              { at: "2.9s", what: "answer streamed" },
+              { at: "0.0s", what: "gauntlet raised" },
+              { at: "2.4s", what: "meaningful stare" },
+              { at: "6.1s", what: "snap" },
             ],
           },
         ],
       },
       {
         id: "p3",
-        title: "Rank these four opening lines",
+        title: "Rank these four catchphrases",
         tags: ["prompt_ab", "run 106", "blocked"],
         meta: { run: 106, check: "prompt_ab" },
         blocks: [
           {
             type: "callout",
             tone: "warn",
-            text: "This card asks for a response type this viewer can't draw. Per the versioning contract, an unsupported REQUIRED field blocks the card — it can never be marked answered, which is better than being silently skipped.",
+            text: "This card asks for a response type this viewer can't draw. Per the versioning contract, an unsupported REQUIRED field blocks the card — it can never be marked answered, which is much better than being silently skipped.",
           },
         ],
         response: {
@@ -856,10 +936,13 @@ window.BATCHES = [
               type: "rank",
               required: true,
               options: [
-                { value: "a", label: "Here's what I found." },
-                { value: "b", label: "Short answer: revenue is up." },
-                { value: "c", label: "Based on the data you have access to…" },
-                { value: "d", label: "Revenue: $412,000 in Q3." },
+                {
+                  value: "a",
+                  label: "I'm the Avatar, you gotta deal with it!",
+                },
+                { value: "b", label: "I am Groot." },
+                { value: "c", label: "It's me, Zuko. Hello." },
+                { value: "d", label: "That's my secret — I'm always angry." },
               ],
             },
           ],
@@ -872,7 +955,7 @@ window.BATCHES = [
   {
     guide_version: "0.9.0",
     id: "01JQ8GB6H1X9Z3QD4L2KTN8VJC",
-    title: "Schema drift review",
+    title: "Multiverse schema drift",
     subtitle: "Written by a newer GUIde than this viewer",
     created_at: "2026-08-31T15:44:00Z",
     source: {
@@ -891,21 +974,21 @@ window.BATCHES = [
 window.DONE_BATCHES = [
   {
     id: "done-1",
-    title: "Peer-review findings",
+    title: "Sidekick naming review",
     repo: "search-api",
     cards: 12,
     when: "yesterday",
   },
   {
     id: "done-2",
-    title: "Tone calibration",
+    title: "Redemption arc tagging",
     repo: "report-gen",
     cards: 6,
     when: "yesterday",
   },
   {
     id: "done-3",
-    title: "Null-handling sweep",
+    title: "Cabbage merchant incidents",
     repo: "web-client",
     cards: 9,
     when: "2 days ago",
@@ -916,10 +999,10 @@ window.DONE_BATCHES = [
 window.INCOMING = {
   guide_version: "0.1.0",
   id: "01JQ8GJ0Y4A7C2FRT6M9WD5XHN",
-  title: "Retrieval misses",
-  subtitle: "Queries where the right document wasn't in the top 10",
+  title: "Lore lookup misses",
+  subtitle: "Questions where the right wiki page wasn't in the top 10",
   instructions:
-    "Was the document genuinely relevant, or is the query ambiguous?",
+    "Was the missed page genuinely relevant, or is the question just ambiguous?",
   created_at: "2026-08-31T15:58:00Z",
   source: {
     agent: "claude-code",
@@ -927,11 +1010,11 @@ window.INCOMING = {
     cwd: "/Users/you/dev/search-api",
     repo: "search-api",
     branch: "recall-work",
-    label: "retrieval misses",
+    label: "lore lookup misses",
   },
   defaults: {
     response: {
-      prompt: "Was the missed document actually relevant?",
+      prompt: "Was the missed page actually relevant?",
       fields: [
         {
           id: "relevant",
@@ -947,7 +1030,7 @@ window.INCOMING = {
             { value: "no", label: "✗ Not relevant", tone: "good", key: "2" },
             {
               value: "ambig",
-              label: "~ Query is ambiguous",
+              label: "~ Question is ambiguous",
               tone: "mute",
               key: "3",
             },
@@ -966,7 +1049,7 @@ window.INCOMING = {
   cards: [
     {
       id: "m1",
-      title: '"how do I reopen a finished batch"',
+      title: '"who is the strongest bender"',
       tags: ["rank 24", "recall@10 miss"],
       meta: { query_id: "q-441", true_rank: 24 },
       blocks: [
@@ -974,33 +1057,28 @@ window.INCOMING = {
           type: "keyvalue",
           pairs: [
             {
-              key: "expected doc",
-              value: "docs/open-questions.md#10-reopening-answers",
+              key: "expected page",
+              value: "Avatar State (combat applications)",
             },
             { key: "actual rank", value: "24" },
-            { key: "top hit", value: "docs/roadmap.md" },
+            { key: "top hit", value: "List of cabbage-related incidents" },
           ],
         },
       ],
     },
     {
       id: "m2",
-      title: '"port already in use"',
-      tags: ["rank 17", "recall@10 miss"],
+      title: '"why is he like that"',
+      tags: ["rank 17", "recall@10 miss", "ambiguous"],
       meta: { query_id: "q-447", true_rank: 17 },
       blocks: [
         {
           type: "keyvalue",
           pairs: [
-            {
-              key: "expected doc",
-              value: "docs/architecture.md#concurrency-honestly",
-            },
+            { key: "expected page", value: "Zuko (character arc)" },
             { key: "actual rank", value: "17" },
-            {
-              key: "top hit",
-              value: "docs/decisions/0002-daemon-with-an-inbox.md",
-            },
+            { key: "top hit", value: "Ozai (parenting)" },
+            { key: "note", value: "arguably the top hit is correct" },
           ],
         },
       ],
