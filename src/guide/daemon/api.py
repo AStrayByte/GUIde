@@ -1,8 +1,11 @@
 """The HTTP surface. Small, and versioned in the path because it is a contract.
 
-Two clients, one API: the browser page and the ``guide`` CLI. Nothing else will
-ever call it, because nothing else can reach it — the daemon binds ``127.0.0.1``
-and there is no auth precisely because there is no one else on the socket.
+Two clients, one API: the browser page and the ``guide`` CLI. There is still no
+per-request auth token — but binding ``127.0.0.1`` doesn't mean no one else can
+reach it: a page served from a domain that resolves to 127.0.0.1 (DNS
+rebinding) is on this socket too, from the browser's point of view. What
+actually stands in for auth is ``LoopbackHostOnly`` in ``daemon/app.py``, which
+checks the Host header a rebound request cannot spoof its way around.
 
 Note what the request models do *not* contain. Blocks, fields, ``meta`` and
 every value in an answer are ``Any``: the daemon stores and counts, it never

@@ -100,6 +100,21 @@ def test_write_info_then_read_info_round_trips(guide_home: Path) -> None:
     assert lifecycle.read_info() == info
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="POSIX mode bits are meaningless on Windows"
+)
+def test_daemon_json_is_not_group_or_world_readable(guide_home: Path) -> None:
+    """``daemon.json`` records the daemon's own URL and pid, not client data, but
+    it lives beside batches under the same home root and gets the same treatment."""
+    daemon_file = lifecycle.daemon_file()
+    daemon_file.parent.mkdir(parents=True, exist_ok=True)
+    daemon_file.write_text("{}", encoding="utf-8")
+    daemon_file.chmod(0o644)
+
+    lifecycle._write_info(_make_info())
+    assert (daemon_file.stat().st_mode & 0o777) == 0o600
+
+
 def test_clear_info_removes_the_file_when_it_names_the_current_process(
     guide_home: Path,
 ) -> None:

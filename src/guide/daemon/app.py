@@ -14,6 +14,19 @@ independent:
 The policy also enforces a design rule the docs already state — *no outbound
 requests from the page.* No CDN, no fonts, no analytics. A batch may hold client
 data, and the page it is drawn on cannot phone home.
+
+A third defence sits below both of the above, because they only hold if the
+socket is only ever reached by this daemon's own page: ``LoopbackHostOnly``.
+Binding 127.0.0.1 does not mean "nobody else is on the socket" — DNS rebinding
+gets a browser to treat an attacker-controlled page as same-origin with this
+daemon. The attacker registers a domain whose A record is 127.0.0.1 (or
+rebinds it there after the page loads), serves a page from it, and that page's
+``fetch()`` calls carry a ``Host`` header of the attacker's domain — which is
+exactly what ``request.url.netloc`` in ``_same_origin`` reads. The Origin
+sent by the browser matches that same Host, so ``SameOriginOnly`` passes it:
+same-origin checks are only as trustworthy as the Host they are compared
+against. ``LoopbackHostOnly`` closes that gap by checking the Host header
+itself against a fixed allowlist, independent of what Origin claims.
 """
 
 from __future__ import annotations
@@ -59,6 +72,15 @@ _SECURITY_HEADERS = {
 
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+LOOPBACK_HOSTNAMES = frozenset({"127.0.0.1", "localhost", "::1"})
+"""What ``Host`` is allowed to name. Port-agnostic — a loopback bind can move.
+
+``request.url.hostname`` (Starlette's parsed form of the ``Host`` header)
+already strips the port and the IPv6 bracket syntax, so ``Host: [::1]:7777``
+compares equal to ``"::1"`` here with no extra normalization. Verified against
+``starlette.datastructures.URL`` directly rather than assumed.
+"""
 
 
 class SecurityHeaders(BaseHTTPMiddleware):
@@ -112,6 +134,35 @@ def _same_origin(request: Request) -> bool:
     return urlparse(origin).netloc == request.url.netloc
 
 
+class LoopbackHostOnly(BaseHTTPMiddleware):
+    """Refuse any request whose ``Host`` header does not name loopback.
+
+    This is what actually stops DNS rebinding — ``SameOriginOnly`` compares
+    Origin against Host, and a rebound page controls both sides of that
+    comparison equally, so it always passes. Checking Host against a fixed
+    allowlist instead gives the attacker nothing to spoof it with: they choose
+    what domain resolves to 127.0.0.1, not what this middleware accepts.
+
+    Unlike ``SameOriginOnly`` this covers every method, GET and HEAD included.
+    A rebound page silently reading the inbox — batches "may hold real client
+    data" — is the primary threat here, and an unauthenticated GET is enough
+    to carry it out. "Safe" methods are not safe against a same-origin read.
+    """
+
+    async def dispatch(self, request: Request, call_next: object) -> Response:
+        """Reject a non-loopback Host before it reaches anything else."""
+        if request.url.hostname not in LOOPBACK_HOSTNAMES:
+            return JSONResponse(
+                status_code=421,
+                content={
+                    "detail": "this daemon only answers to a loopback Host header. "
+                    "Use the guide CLI, or the page served by this daemon."
+                },
+                headers=_SECURITY_HEADERS,
+            )
+        return await call_next(request)  # type: ignore[operator]
+
+
 def create_app(store: Store | None = None) -> FastAPI:
     """Build the daemon application.
 
@@ -130,9 +181,14 @@ def create_app(store: Store | None = None) -> FastAPI:
 
     # Starlette wraps outward-in from the last one added, so SameOriginOnly is
     # the outer layer and its 403 never passes through SecurityHeaders — which is
-    # why that rejection attaches the headers itself.
+    # why that rejection attaches the headers itself. LoopbackHostOnly goes on
+    # last of all, making it the true outermost layer: a rebound Host should
+    # never even reach the Origin check, since Origin is derived from the same
+    # attacker-controlled request that SameOriginOnly alone would trust. It
+    # attaches the headers itself for the same reason SameOriginOnly does.
     app.add_middleware(SecurityHeaders)
     app.add_middleware(SameOriginOnly)
+    app.add_middleware(LoopbackHostOnly)
     app.include_router(router)
     app.include_router(skill_router)
 

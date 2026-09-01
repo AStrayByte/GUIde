@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import json
+import sys
+from pathlib import Path
 
 import pytest
 
 from conftest import make_batch
 from guide.errors import AmbiguousBatchId, BatchNotFound, InvalidBatch
 from guide.store import ANSWERS_FILENAME, BATCH_FILENAME, Store
+
+_posix_only = pytest.mark.skipif(
+    sys.platform == "win32", reason="POSIX mode bits are meaningless on Windows"
+)
 
 
 def test_create_mints_a_ulid_and_ignores_a_client_supplied_id(store: Store) -> None:
@@ -153,6 +159,47 @@ def test_archive_moves_the_batch_directory(store: Store) -> None:
     assert not (store.root / stored["id"]).exists()
     assert (destination / BATCH_FILENAME).is_file()
     assert (destination / ANSWERS_FILENAME).is_file()
+
+
+# -- Permissions: batches may hold real client data -------------------------
+
+
+@_posix_only
+def test_batch_directory_is_not_group_or_world_readable(store: Store) -> None:
+    stored = store.create(make_batch())
+
+    assert ((store.root / stored["id"]).stat().st_mode & 0o777) == 0o700
+
+
+@_posix_only
+def test_guide_home_root_is_not_group_or_world_readable(store: Store, guide_home: Path) -> None:
+    """Batches may hold real client data, so the enclosing root has to be locked
+    down too — a 0700 batch directory under a world-readable ``~/.guide`` still
+    lets anyone on the machine list batch ids (and ids double as filenames)."""
+    store.create(make_batch())
+
+    assert (guide_home.stat().st_mode & 0o777) == 0o700
+
+
+@_posix_only
+def test_written_batch_and_answers_files_are_not_group_or_world_readable(store: Store) -> None:
+    stored = store.create(make_batch())
+
+    batch_path = store.root / stored["id"] / BATCH_FILENAME
+    answers_path = store.root / stored["id"] / ANSWERS_FILENAME
+
+    assert (batch_path.stat().st_mode & 0o777) == 0o600
+    assert (answers_path.stat().st_mode & 0o777) == 0o600
+
+
+@_posix_only
+def test_archived_batch_directory_is_not_group_or_world_readable(store: Store) -> None:
+    stored = store.create(make_batch())
+
+    destination = store.archive(stored["id"])
+
+    assert (destination.stat().st_mode & 0o777) == 0o700
+    assert ((destination / BATCH_FILENAME).stat().st_mode & 0o777) == 0o600
 
 
 def test_unknown_top_level_and_card_keys_survive_the_round_trip(store: Store) -> None:
