@@ -24,8 +24,9 @@ instead of a chat bubble.
    validation, not for the model to re-read every time).
 2. Checks the installed viewer's format version with `guide --format-version`, and
    targets it. See [versioning.md](versioning.md).
-3. Builds the batch from what's in context, stamping `source.session_id` so the answers
-   find their way home.
+3. Builds the batch from what's in context. `source.session_id` is stamped by
+   `guide push` from the environment, so the answers find their way home without the
+   agent having to remember.
 4. `guide push` — the daemon starts if it isn't running, and the batch appears in your
    inbox.
 
@@ -56,9 +57,10 @@ handles the multiplexing. What the skill must get right:
 - **One batch per question set.** Don't append to a batch already in the inbox —
   someone may be halfway through answering it.
 
-## What goes in the skill file
+## The skill file
 
-Not the whole schema. A compact authoring guide, roughly one page:
+It exists: [`src/guide/skill/SKILL.md`](../src/guide/skill/SKILL.md). Not the whole
+schema — a compact authoring guide, roughly one page:
 
 - the batch skeleton, including the `guide_version` and `source` stanzas
 - the block vocabulary, one line each
@@ -66,6 +68,26 @@ Not the whole schema. A compact authoring guide, roughly one page:
 - **three worked cards** covering the common shapes: a judgment call with evidence, an
   A/B comparison, a rating
 - the rule that `meta` is the passthrough for anything domain-specific
+
+It ships **inside the package** rather than at the repo root, so the copy an agent
+installs always matches the `guide` binary it will be calling. A skill documenting a
+format the installed daemon does not speak is worse than no skill.
+
+### Installing it
+
+```
+guide skill install     # writes ~/.claude/skills/guide/SKILL.md
+guide skill show        # print it
+guide skill prompt      # a paragraph to paste into Claude, which installs it for you
+guide skill page        # open the install page in a browser
+```
+
+The page at `http://127.0.0.1:7777/skill` offers all four, and knows whether the skill
+is currently installed — so its instructions cannot go stale the way a README's do.
+
+`source` is filled in for you. `guide push` reads the working directory, the git repo
+and branch, and `$CLAUDE_CODE_SESSION_ID`, and only fills in what the batch left blank —
+anything the agent stated wins.
 
 ## Authoring rules for the agent
 

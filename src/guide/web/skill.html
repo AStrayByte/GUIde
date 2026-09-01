@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde — install the skill</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="plain">
+    <div class="page">
+      <header class="page-head">
+        <a class="back" href="/">← inbox</a>
+        <h1>Teach Claude to use GUIde</h1>
+        <p class="lede">
+          A skill is one markdown file. Once it is in place, Claude knows how to
+          build a batch, push it here, and read your answers back — so you can
+          say <em>"put these in GUIde"</em> and it just happens.
+        </p>
+        <p class="status" id="status">checking…</p>
+      </header>
+
+      <section class="way">
+        <h2><span class="n">1</span> Let Claude install it</h2>
+        <p>
+          Paste this into any Claude Code session. It reads the skill file off
+          disk and writes it where Claude looks for skills — nothing is copied
+          through the chat, so it cannot get mangled.
+        </p>
+        <div class="copybox">
+          <pre class="pre" id="prompt">…</pre>
+          <div class="row" id="promptActions"></div>
+        </div>
+      </section>
+
+      <section class="way">
+        <h2><span class="n">2</span> One command</h2>
+        <p>If you would rather not go through an agent:</p>
+        <div class="copybox">
+          <pre class="pre" id="command">guide skill install</pre>
+          <div class="row" id="commandActions"></div>
+        </div>
+      </section>
+
+      <section class="way">
+        <h2><span class="n">3</span> Do it right now</h2>
+        <p>
+          This daemon can write the file itself. It goes to
+          <code id="installPath">…</code> and overwrites whatever is there.
+        </p>
+        <div class="row">
+          <button type="button" class="btn primary" id="installBtn">
+            Install the skill
+          </button>
+          <span class="muted" id="installResult"></span>
+        </div>
+      </section>
+
+      <section class="way">
+        <h2><span class="n">4</span> Copy it by hand</h2>
+        <p>
+          The file itself, if you would rather read it first or put it somewhere
+          else — a project's <code>.claude/skills/</code>, for instance.
+        </p>
+        <div class="copybox">
+          <details>
+            <summary>show SKILL.md</summary>
+            <pre class="pre scroll-tall" id="content">…</pre>
+          </details>
+          <div class="row" id="contentActions"></div>
+        </div>
+      </section>
+
+      <footer class="page-foot">
+        After installing, restart Claude Code so it picks the skill up.
+        <button type="button" id="themeBtn">light</button>
+      </footer>
+    </div>
+
+    <script src="render.js"></script>
+    <script src="ui.js"></script>
+    <script src="skill.js"></script>
+  </body>
+</html>

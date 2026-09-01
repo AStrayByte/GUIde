@@ -1,5 +1,10 @@
 # Architecture
 
+This is the **product** architecture: what GUIde is, what the layers are, and what is
+deliberately not built. For how it is actually implemented — module boundaries, the
+daemon lifecycle, the HTTP surface, where a new file goes — read the
+[engineering wiki](wiki/index.html), which opens straight from a clone.
+
 ## The one idea
 
 **The UI is a pure function of a JSON file.**
@@ -144,11 +149,12 @@ $ guide push ./questions.json
 - serves the inbox and the cards
 - **writes `answers.json` on every change** — no Save button, no lost work
 - accepts pushes from any number of sessions
-- watches batch files, so a rewrite from Claude live-reloads the page
+- tells every open page about a new batch over SSE
 
 The front-end is a single page with no build step, so it also opens straight from
 `file://` against one batch if you'd rather not run anything. The daemon is what makes
-it good, not what makes it work.
+it good, not what makes it work. ([ADR 0007](decisions/0007-no-build-step.md) records
+what keeping that property costs.)
 
 `localStorage` still backs in-progress state as a belt-and-braces layer, but the file
 on disk is the source of truth.

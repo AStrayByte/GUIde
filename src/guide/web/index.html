@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GUIde — preview</title>
+    <title>GUIde</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -11,13 +12,12 @@
       <nav class="rail">
         <div class="brand">
           <b>GU<i>I</i>de</b>
-          <span>127.0.0.1:7777</span>
+          <span id="brandHost">127.0.0.1</span>
         </div>
         <div id="rail-body"></div>
         <div class="rail-foot">
-          <span>mock</span>
-          <button id="themeBtn" title="Toggle theme">light</button>
-          <button id="resetBtn" title="Clear all answers">reset</button>
+          <a id="skillLink" href="/skill" hidden>skill</a>
+          <button type="button" id="themeBtn" title="Toggle theme">light</button>
         </div>
       </nav>
 
@@ -26,7 +26,11 @@
       </main>
     </div>
 
-    <script src="batches.js"></script>
+    <!-- Classic scripts, in dependency order. No modules and no bundler, so this
+         same page also opens straight off disk over file://. -->
     <script src="render.js"></script>
+    <script src="ui.js"></script>
+    <script src="transport.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>

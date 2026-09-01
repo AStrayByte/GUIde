@@ -1,10 +1,27 @@
 .DS_Store
+.superseded/
+
+# Python — uv manages the venv and the lockfile; the lockfile IS committed.
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.complexipy_cache/
+
+# Review reports are working notes, not artifacts.
+.reviews/
+
 node_modules/
 .env
 .dev.vars
-.superseded/
 
-# Batches and answers may contain real client data. Examples are synthetic and tracked.
+# Batches and answers may contain real client data. They live in ~/.guide/,
+# outside every working tree, so this is belt-and-braces. Examples are
+# synthetic and tracked.
 .guide/
 *.batch.json
 *.answers.json

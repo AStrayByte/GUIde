@@ -420,3 +420,93 @@ textarea:focus, input:focus { outline: 0; border-color: var(--accent); }
 
 .empty { text-align: center; padding: 90px 20px; color: var(--muted); }
 .empty .big { font-size: 30px; margin-bottom: 10px; }
+
+/* ══ Added for the shipped page ═══════════════════════════════════════════
+   Everything below is new relative to the preview mock. The mock set a handful
+   of styles as inline `style="…"` attributes; those are classes now, because
+   the daemon serves a Content-Security-Policy of `style-src 'self'` and an
+   inline style attribute is exactly the hole that policy is closing. */
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spaced { margin-top: 14px; }
+.muted { color: var(--muted); }
+.figure { margin: 0; }
+.figure img { max-width: 100%; border-radius: 6px; }
+
+.status.bad, .bad { color: var(--bad); }
+.status.good, .good { color: var(--good); }
+
+/* A field's own label, distinct from the response prompt above the group. */
+.flabel {
+  font: 10px var(--mono); color: var(--dim);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px;
+}
+
+.gate.empty { text-align: center; }
+.gate.empty h2 { color: var(--text); }
+.gate .filepick { margin: 18px auto 8px; display: block; font: 12px var(--mono); }
+
+.rail-foot a {
+  color: var(--muted); text-decoration: none;
+  font: 11px var(--mono); padding: 3px 8px;
+  border: 1px solid var(--border); border-radius: 5px;
+}
+.rail-foot a:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── The install-the-skill page ───────────────────────────────────────── */
+
+body.plain { display: block; }
+.page { max-width: 780px; margin: 0 auto; padding: 44px 28px 90px; }
+
+.page-head { margin-bottom: 34px; }
+.page-head h1 { margin: 12px 0 8px; font-size: 25px; letter-spacing: -0.5px; }
+.page-head .lede { color: var(--muted); font-size: 14.5px; max-width: 62ch; margin: 0; }
+.page-head .status {
+  margin-top: 16px; font: 11.5px var(--mono); color: var(--dim);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 11px; display: inline-block;
+}
+.back { color: var(--dim); text-decoration: none; font: 11px var(--mono); }
+.back:hover { color: var(--accent); }
+
+.way {
+  border-top: 1px solid var(--border);
+  padding-top: 22px; margin-top: 26px;
+}
+.way h2 {
+  font-size: 15px; margin: 0 0 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.way h2 .n {
+  width: 21px; height: 21px; border-radius: 50%;
+  background: var(--raised); border: 1px solid var(--border2);
+  font: 11px var(--mono); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.way p { color: var(--muted); margin: 0 0 12px; max-width: 66ch; }
+.way code {
+  background: var(--raised); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; font: 11.5px var(--mono);
+}
+
+.copybox { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+.copybox .pre { border: 0; border-radius: 8px 8px 0 0; margin: 0; }
+.copybox details { padding: 0; }
+.copybox details summary {
+  padding: 10px 13px; cursor: pointer;
+  font: 11px var(--mono); color: var(--muted);
+}
+.copybox details .pre { border-radius: 0; }
+.copybox .row { padding: 9px 11px; border-top: 1px solid var(--border); }
+.scroll-tall { max-height: 420px; overflow: auto; }
+
+.page-foot {
+  margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--border);
+  font: 11px var(--mono); color: var(--dim);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.page-foot button {
+  background: var(--raised); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 9px;
+  font: 11px var(--mono); color: var(--muted); cursor: pointer;
+}

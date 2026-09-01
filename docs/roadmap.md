@@ -6,7 +6,7 @@ been worth building.
 
 ---
 
-## Phase 0 — Freeze the format · _hours_
+## Phase 0 — Freeze the format · **shipped**
 
 Settle `batch.schema.json`, `answers.schema.json`, and the version-compatibility rules
 in [versioning.md](versioning.md). Convert one real review by hand to prove the format
@@ -20,13 +20,17 @@ key in the schema.
 
 ---
 
-## Phase 1 — The daemon and the inbox · _a few days_ ◀ the MVP
+## Phase 1 — The daemon and the inbox · **shipped 2026-08-31** ◀ the MVP
 
 ```
 $ guide push ./questions.json
-  daemon already running on http://127.0.0.1:7777
-  pushed 01JQ8F… · 17 cards · 3 batches waiting
+  started the guide daemon on http://127.0.0.1:7777
+  pushed 01JQ8FQ2X7K3… · 17 cards
+  3 batches waiting · http://127.0.0.1:7777/?batch=01JQ8FQ2X7K3M9VB4H0TZC5RWD
 ```
+
+How it is actually built: [wiki/](wiki/index.html) for the tour,
+[decisions/](decisions/) 0003–0007 for why each piece is the way it is.
 
 **The daemon** — one process, started on demand, bound to `127.0.0.1`:
 

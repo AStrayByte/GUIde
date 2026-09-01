@@ -1,9 +1,11 @@
 # Open questions
 
-Decisions not yet made. The starred one changes the design; the rest are details that
-can wait until something's running.
+Decisions not yet made — and, below the line, the ones that are.
 
-**Settled already** (2026-08-31):
+Phase 1 is built, so most of this list is now history. What is left is genuinely
+open.
+
+**Settled** (2026-08-31):
 
 - Single-user, run locally. No hosting, no accounts, no sharing model — each person
   installs their own copy. This deleted most of what was open.
@@ -13,39 +15,37 @@ can wait until something's running.
   [ADR 0002](decisions/0002-daemon-with-an-inbox.md).
 - `guide_version` is `major.minor.patch`, declared first, checked before parsing.
   [versioning.md](versioning.md).
+- Python, three dependencies, installed with `uv`.
+  [ADR 0003](decisions/0003-python-and-uv.md). **Closes ★1.**
+- Daemon lifecycle: the port bind is the lock, on-demand start with a notice,
+  `wait` watches the file. [ADR 0004](decisions/0004-daemon-lifecycle.md).
+  **Closes 3.**
+- SSE over polling, and a versioned `/api/v0`.
+  [ADR 0005](decisions/0005-http-surface-and-sse.md). **Closes 2.**
+- The `markdown` block stays, safe by construction, behind a CSP.
+  [ADR 0006](decisions/0006-markdown-by-construction.md).
+- No build step; classic scripts so `file://` keeps working.
+  [ADR 0007](decisions/0007-no-build-step.md).
 
 ---
 
-## ★ 1. What language does it ship in?
+## ~~★ 1. What language does it ship in?~~ — settled
 
-This decides how someone else installs it, which is the only distribution question
-left. The daemon requirement raises the stakes a little — it's a long-lived process now, not a
-script.
+**Python**, with `fastapi` + `uvicorn` + `httpx` and nothing else, installed
+with `uv tool install guide-cli`. The reasoning, including an honest accounting
+of what choosing it over `npx` costs, is
+[ADR 0003](decisions/0003-python-and-uv.md).
 
-|            | Install                  | Notes                                                                                                                                      |
-| ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Node**   | `npx guide push …`       | Lowest friction — no install step. Front-end is JS anyway, so one language. Good process/watch story.                                      |
-| **Python** | `pipx install guide-cli` | Your home turf. Stdlib covers it, but `http.server` is weak for a long-lived daemon; you'd want a real ASGI server, which is a dependency. |
-| **Go**     | download a binary        | Best daemon story by far, single file, zero runtime deps. Most work, and you'd be writing Go.                                              |
+## ~~2. How does the page find out a new batch arrived?~~ — settled
 
-Still leaning **Node**, and the daemon strengthens that: `npx` means a new user runs one
-command and never installs anything, and Node's watch/serve primitives are exactly what
-a small daemon needs.
+**SSE.** Not because of scale — polling really would have been fine — but
+because `EventSource` reconnects on its own, so "the daemon restarted" costs
+zero lines. [ADR 0005](decisions/0005-http-surface-and-sse.md).
 
-## 2. How does the page find out a new batch arrived?
+## ~~3. Does the daemon auto-start, or is that too magical?~~ — settled
 
-- **SSE** from the daemon — clean, one connection, natural fit.
-- **Poll** every few seconds — dumber, and honestly fine at this scale.
-
-Leaning SSE, but it's not worth blocking on. Either is a small amount of code.
-
-## 3. Does the daemon auto-start, or is that too magical?
-
-`guide push` starting a background process the user never asked for is convenient and
-slightly rude. Options: always auto-start (proposed), auto-start with a one-line notice,
-or require an explicit `guide serve` the first time.
-
-Leaning auto-start **with a notice**, plus `guide stop`.
+**Auto-start, with a one-line notice on stderr**, plus `guide stop` and
+`guide status`. [ADR 0004](decisions/0004-daemon-lifecycle.md).
 
 ## 4. Notifications when you're not looking at the browser
 
@@ -55,17 +55,20 @@ notification on the first arrival? A menu-bar count? Or is the browser tab enoug
 Probably nothing in Phase 1, but the daemon makes it trivially possible later, so don't
 design it out.
 
-## 5. Batch lifecycle and cleanup
+## ~~5. Batch lifecycle and cleanup~~ — settled
 
-Answered batches age out of the rail after N days — what's N? And does `guide clean`
-delete them or archive them? Given batches may hold client data, **delete** is arguably
-the safer default, with an explicit `--archive` to keep.
+N is **7 days**, and `guide clean` **deletes** by default, because batches may hold
+client data and the safe default for data nobody asked to keep is not keeping it.
+`--archive` moves to `~/.guide/archive/` instead; `--days` and `--all` override the
+selection; `--yes` skips the prompt. Removal goes through the daemon so it is
+serialised with writes like everything else.
 
-## 6. Should there be a Done button at all?
+## ~~6. Should there be a Done button at all?~~ — settled
 
-Answers write continuously, so nothing is at risk. But something must flip
-`complete: true` so `guide wait` knows to stop blocking. So: yes, one Done button at the
-bottom, and nothing else.
+Yes: exactly one, at the bottom, disabled until every answerable card is answered.
+It flips `complete: true`, which is the single thing `guide wait` blocks on.
+`POST /api/v0/batches/{id}/complete` also takes `{"complete": false}`, so it is
+undoable — nothing in this design should be a one-way door.
 
 ## 7. Repo name
 

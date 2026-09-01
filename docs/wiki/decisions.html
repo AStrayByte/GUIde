@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde wiki — why it's built that way</title>
+    <link rel="stylesheet" href="wiki.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <main class="main">
+        <article class="doc">
+          <div class="eyebrow">GUIde engineering wiki · reference</div>
+          <h1>Why it's built that way</h1>
+          <p class="lede">
+            Seven architectural decision records, summarised — what each one
+            decided, and what it costs. Read this before changing anything
+            structural. If you disagree with one, the ADR is the thing to argue
+            with, and the right move is to write the next one.
+          </p>
+
+          <div class="note">
+            <p>
+              <b>Why ADRs and not a design doc.</b> A design doc goes stale and
+              nobody notices. An ADR records a decision at a moment, with the
+              alternatives that were live at the time and the cost that was
+              accepted — and that stays true even after the decision is reversed.
+              This repo's rule is that plans and specs get deleted once the ADR
+              exists. The one that produced ADRs 0003–0007 is gone; these are what
+              survived.
+            </p>
+          </div>
+
+          <h2>The seven, in one line each</h2>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Decides</th><th>The cost it accepts</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a href="#adr1">0001</a></td>
+                  <td>A page driven by files, not a chat UI</td>
+                  <td>No live conversation with the reviewer, until Phase 2</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr2">0002</a></td>
+                  <td>One daemon with a global inbox</td>
+                  <td>Phase 1 roughly doubles in size</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr3">0003</a></td>
+                  <td>Python, three dependencies, installed with uv</td>
+                  <td>The best install story — <code>npx</code> — is given up</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr4">0004</a></td>
+                  <td>The port bind is the lock</td>
+                  <td>The subtlest file in the repo</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr5">0005</a></td>
+                  <td>A versioned <code>/api/v0</code>, SSE, and same-origin writes</td>
+                  <td>A keystroke is an HTTP round trip</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr6">0006</a></td>
+                  <td>Markdown safe by construction, plus a CSP</td>
+                  <td>No links in markdown, and no inline styles anywhere</td>
+                </tr>
+                <tr>
+                  <td><a href="#adr7">0007</a></td>
+                  <td>No build step</td>
+                  <td>Classic scripts, so no TypeScript and no ES modules</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="adr1">
+            0001 — A page driven by files, not a chat UI
+            <a href="../decisions/0001-page-over-chat-ui.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            The alternative was a chat window that decodes special syntax an agent
+            emits into live widgets inline. Both designs rest on the same real
+            insight — <em>the agent should emit structured blocks that a fixed
+            renderer decodes, rather than hand-writing HTML.</em> They differ only
+            in where those blocks land.
+          </p>
+          <p>
+            Building the chat window would mean running inference yourself (an API
+            key, streaming, retries, history, token cost) to rebuild something you
+            already have and that is better: <strong>Claude Code is your chat
+            client.</strong> It has your repo, your tools, your context. The thing
+            it is missing is somewhere to <em>render and collect</em>.
+          </p>
+          <p>
+            Volume settles it too. Two hundred items with progress state, filters
+            and keyboard navigation is a page. Review state that lives in a
+            conversation is state you will lose.
+          </p>
+          <div class="note good">
+            <p>
+              <b>The rule this produced, and it is the most important one in the
+              codebase:</b> the renderer never learns your domain. Domain data
+              rides in an opaque <code>meta</code> object, passed through untouched
+              and echoed back. It is what stops GUIde becoming specific to one
+              project.
+            </p>
+          </div>
+
+          <h2 id="adr2">
+            0002 — One daemon with a global inbox
+            <a href="../decisions/0002-daemon-with-an-inbox.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            The original sketch was a process per batch: serve one file, answer it,
+            exit. Then the requirement arrived — several Claude sessions at once,
+            in different repos — and a process per batch breaks immediately: three
+            servers fighting over a port, three tabs, and no way to see what is
+            waiting overall.
+          </p>
+          <p>
+            <strong>The inbox is the actual feature.</strong> With several agents
+            working, the question is not "render this file", it is "what needs me
+            right now?" That is a queue, and a queue needs something persistent to
+            live in.
+          </p>
+          <p>Three consequences worth remembering:</p>
+          <ul>
+            <li>
+              <b>The daemon outlives the sessions.</b> Close a Claude session
+              mid-review and the questions are still there.
+            </li>
+            <li>
+              <b>Global storage is safer than per-repo.</b> <code>~/.guide/</code>
+              is outside every working tree, so a batch with client data in it
+              cannot be accidentally committed.
+            </li>
+            <li>
+              <b>One writer removes a class of bugs.</b> Concurrent sessions cannot
+              interleave writes, because only the daemon writes.
+            </li>
+          </ul>
+
+          <h2 id="adr3">
+            0003 — Python, three dependencies, installed with uv
+            <a href="../decisions/0003-python-and-uv.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            This closed the one open question that gated everything else. Three
+            options were scored: a Python daemon with a vanilla page, a Node daemon
+            with a vanilla page, and Django + React.
+          </p>
+          <p>
+            <strong>All three cleared every hard constraint</strong> — browser UI,
+            runs on a Mac, reads and writes local files — so the constraints did
+            not separate them. What separated them was which codebase can be read
+            fluently when something breaks at 11pm.
+          </p>
+          <div class="note warn">
+            <p>
+              <b>The honest accounting.</b> <code>npx guide push …</code> genuinely
+              is the best install story here, and pretending otherwise would be
+              dishonest. But zero-install is a <em>distribution</em> win and this
+              tool has roughly one user; maintainability is a <em>daily</em> win.
+              For a solo tool, daily beats distribution. <code>uv</code> then closed
+              most of the remaining gap: <code>uvx guide</code> runs it without
+              installing anything.
+            </p>
+          </div>
+          <p>
+            Django + React was never close. Django wants a database, and the design
+            says explicitly that answers are files and not a results database.
+          </p>
+          <h4>The dependency budget</h4>
+          <p>
+            Three, each justified: <code>fastapi</code> (routing, validation, SSE),
+            <code>uvicorn</code> (the server, and the only clean way to hand it a
+            socket we bound ourselves), <code>httpx</code> (one HTTP client).
+            Deliberately <em>not</em> taken: a ULID library, <code>watchfiles</code>,
+            a CLI framework, <code>rich</code>. The ULID encoder is twenty lines of
+            fully specified arithmetic; <code>guide wait</code> polls one file.
+          </p>
+
+          <h2 id="adr4">
+            0004 — The port bind is the lock
+            <a href="../decisions/0004-daemon-lifecycle.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            Two <code>guide push</code> calls in the same second both find no daemon
+            and both start one. They race to <code>bind()</code>, and the kernel
+            picks exactly one winner. No lockfile, because a lockfile would be a
+            worse version of a guarantee the OS already makes.
+          </p>
+          <div class="note bad">
+            <p>
+              <b>The trap, and the reason this ADR exists.</b> The obvious response
+              to <code>EADDRINUSE</code> is to try the next port. That is right when
+              something <em>else</em> holds 7777 and catastrophic when another GUIde
+              daemon does — you get two daemons, two inboxes, and a coin flip over
+              which one a push reaches. So the loser asks what is there first: a
+              GUIde daemon means it lost the race and exits quietly.
+            </p>
+          </div>
+          <p>
+            The other half is that <strong><code>guide wait</code> watches the
+            answers file, not the daemon.</strong> It never opens a socket. So a
+            session waiting on a 200-card review survives a daemon restart, a
+            <code>guide stop</code>, or a crash — which is the one thing you really
+            do not want to depend on staying up for as long as a human takes to
+            answer 200 questions.
+          </p>
+
+          <h2 id="adr5">
+            0005 — A versioned surface, and SSE over polling
+            <a href="../decisions/0005-http-surface-and-sse.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            Ten endpoints under <code>/api/v0</code>. The version is in the path
+            because it is a contract, and a future shape should be servable
+            alongside this one rather than replacing it under a live page.
+          </p>
+          <p>
+            <strong>Polling would have been fine at this scale</strong>, and the
+            design docs said so. SSE wins on a detail that is not about scale:
+            <code>EventSource</code> reconnects on its own, so the "daemon went away
+            and came back" path costs zero lines. The bus is deliberately lossy —
+            every event is a hint to refresh, never a delta to replay — so a page
+            that misses one still converges.
+          </p>
+          <p>
+            The rule that keeps the surface honest: <strong>the daemon stores and
+            counts, but never interprets.</strong> The browser sends only what it
+            alone can know — whether <em>this</em> renderer could draw every block,
+            and which renderer it was. Everything else the daemon derives from the
+            batch it already holds, so a buggy page cannot make the answers file
+            disagree with its batch.
+          </p>
+          <div class="note warn">
+            <p>
+              <b>This ADR was amended after review.</b> Its first version said
+              there was no auth "because there is nobody else on the socket". That
+              was wrong: every open browser tab is on that socket too, and a
+              cross-origin <code>POST</code> needs no preflight. State-changing
+              requests are now gated on origin. The ADR keeps the original claim
+              and says why it was wrong, because that is more useful to the next
+              reader than a quietly corrected sentence.
+            </p>
+          </div>
+
+          <h2 id="adr6">
+            0006 — Markdown safe by construction, plus a CSP
+            <a href="../decisions/0006-markdown-by-construction.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            Batch content is agent-authored, from data an agent gathered. The
+            <code>markdown</code> text block is the one place in GUIde where text
+            nobody hand-checked becomes markup. The call was explicit: sanitise it,
+            or drop <code>markdown</code> and keep <code>plain</code>/<code>pre</code>.
+          </p>
+          <p>Neither, in the end — two independent defences instead:</p>
+          <ol class="steps">
+            <li>
+              <b>Escape first, then transform.</b>
+              <p>
+                Every fragment is escaped before any transform runs, and the
+                invariant is that <em>no tag, and no attribute value, ever derives
+                from the source text</em>. Links are absent for exactly that reason:
+                an <code>href</code> is an attribute, and an attribute is a place to
+                put <code>javascript:</code>.
+              </p>
+            </li>
+            <li>
+              <b>A CSP that assumes the first defence has a bug.</b>
+              <p>
+                <code>default-src 'none'</code>. No inline script, no remote
+                anything, no form target, no framing. Injected markup would have
+                nowhere to go.
+              </p>
+            </li>
+          </ol>
+          <p>
+            Shipping DOMPurify was rejected: a dependency, a build step to vendor
+            it, and a CDN reference the CSP would have to allow — all to sanitise
+            output we generate ourselves from a fixed grammar. Sanitisers are for
+            HTML you did not author.
+          </p>
+          <p>
+            The CSP also makes a rule the docs always stated into a mechanism: the
+            page cannot make an outbound request even if someone adds one by
+            accident. The consequence you will hit in practice is that
+            <code>style-src 'self'</code> forbids inline <code>style="…"</code>
+            attributes anywhere in the page.
+          </p>
+
+          <h2 id="adr7">
+            0007 — No build step
+            <a href="../decisions/0007-no-build-step.md">·&nbsp;full text</a>
+          </h2>
+          <p>
+            Settled by evidence rather than argument: a complete renderer — every
+            block type, every field type, the rail, the version gate, the degrade
+            path, keyboard navigation — came to roughly 570 lines of vanilla
+            JavaScript in the mock, and nothing domain-specific ever reached it.
+          </p>
+          <div class="note warn">
+            <p>
+              <b>The forced trade, stated rather than discovered.</b> Browsers
+              refuse ES module imports over <code>file://</code> — the module fetch
+              is subject to CORS and a <code>file://</code> origin fails it. Opening
+              a single batch straight off disk with no process running is a
+              documented feature, and it matters precisely when a batch holds data
+              you would rather keep off any process. So the scripts are classic
+              <code>&lt;script&gt;</code> tags in dependency order. Unfashionable,
+              and it buys something concrete: the same page that the daemon serves
+              also works when double-clicked.
+            </p>
+          </div>
+          <p>
+            The bill for not having a bundler is
+            <code>tests/test_web_assets.py</code>, which checks the four seams a
+            bundler would have caught: a missing <code>src=</code> target, the
+            viewer version drifting from <code>FORMAT_VERSION</code>, the JS field
+            vocabulary drifting from the schema, and an inline style reappearing.
+          </p>
+
+          <h2>Writing the next one</h2>
+          <p>
+            ADRs go in <code>docs/decisions/</code>, numbered in sequence. The shape
+            that has worked here:
+          </p>
+          <pre><code># ADR 000N — the decision, as a sentence
+
+**Status:** proposed | accepted | superseded by 000M
+**Date:**
+
+## Context      what was true, and what forced a choice
+## Decision     what was chosen, concretely enough to implement from
+## Why          the reasoning, including the argument for what you rejected
+## Consequences what this costs, honestly. The section that ages best.
+## Revisit if   the condition under which this should be reopened</code></pre>
+          <p>
+            The <em>Consequences</em> and <em>Revisit if</em> sections are the ones
+            that earn their keep two years later. An ADR that only lists reasons why
+            the decision was right is a press release.
+          </p>
+          <p>
+            When a decision is reversed, do not edit the old ADR. Mark it superseded
+            and write a new one. The record of what was believed at the time is the
+            point.
+          </p>
+
+          <div class="pager">
+            <a href="architecture.html">← How it's built</a>
+            <a href="index.html">Back to the overview →</a>
+          </div>
+          <footer class="wiki">docs/wiki/decisions.html</footer>
+        </article>
+      </main>
+    </div>
+    <script src="wiki.js"></script>
+  </body>
+</html>

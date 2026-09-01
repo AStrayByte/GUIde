@@ -1,0 +1,24 @@
+{
+  "comment": "The version-gate truth table. Both implementations of the rule read it: src/guide/versioning.py via tests/test_versioning.py, and web/render.js by mirroring these cases. Change a rule here and both sides must move. docs/versioning.md is the prose.",
+  "viewer": "1.4.2",
+  "cases": [
+    { "batch": "1.4.2", "gate": "ok", "why": "identical" },
+    { "batch": "1.4.9", "gate": "ok", "why": "patch ahead is always silent" },
+    { "batch": "1.4.0", "gate": "ok", "why": "patch behind is always silent" },
+    { "batch": "1.2.0", "gate": "ok", "why": "minor behind — additive-only makes this safe" },
+    { "batch": "1.6.0", "gate": "warn", "why": "minor ahead — render, but say so" },
+    { "batch": "2.0.0", "gate": "hard", "why": "major ahead" },
+    { "batch": "0.9.0", "gate": "hard", "why": "major behind" }
+  ],
+  "pre_1_0": {
+    "comment": "While the format is 0.x, minor acts as major.",
+    "viewer": "0.1.0",
+    "cases": [
+      { "batch": "0.1.0", "gate": "ok", "why": "identical" },
+      { "batch": "0.1.7", "gate": "ok", "why": "patch is still silent pre-1.0" },
+      { "batch": "0.2.0", "gate": "hard", "why": "pre-1.0 minor may break the format" },
+      { "batch": "0.0.9", "gate": "hard", "why": "pre-1.0 minor, the other direction" },
+      { "batch": "1.0.0", "gate": "hard", "why": "major mismatch" }
+    ]
+  }
+}

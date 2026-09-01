@@ -1,6 +1,7 @@
 # Screenshots
 
-Captured from `preview/index.html` in headless Chrome, 2× for retina. All five are
+Captured from the pre-build clickable mock (now retired to `.superseded/preview/`)
+in headless Chrome, 2× for retina. All five are
 referenced from the root README.
 
 | File               | State captured                                                |
@@ -11,5 +12,5 @@ referenced from the root README.
 | `version-gate.png` | Batch 5 — refused outright for declaring `0.9.0`              |
 | `answers.png`      | The Copy JSON modal — the answers file the daemon would write |
 
-To retake any of them by hand: open the preview, set up the state you want, then `⌘⇧4`
+To retake any of them by hand: open the shipped page at `guide open`, set up the state you want, then `⌘⇧4`
 plus space to grab a window, or `⌘⇧5` for a region.

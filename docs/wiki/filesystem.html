@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde wiki — the file system</title>
+    <link rel="stylesheet" href="wiki.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <main class="main">
+        <article class="doc">
+          <div class="eyebrow">GUIde engineering wiki · reference</div>
+          <h1>The file system</h1>
+          <p class="lede">
+            Every directory in the repo, what belongs in it, and what
+            <code>~/.guide/</code> looks like on a machine that has been using this
+            for a week. If you are about to add a file and are not sure where it
+            goes, the answer is on this page.
+          </p>
+
+          <h2>The repo</h2>
+
+          <div class="tree">
+<span class="d">GUIde/</span>
+├── <span class="f">pyproject.toml</span>          <span class="c">the package, its three dependencies, ruff + pytest config</span>
+├── <span class="f">uv.lock</span>                 <span class="c">committed — the exact resolution everyone gets</span>
+├── <span class="f">.python-version</span>         <span class="c">3.12, which uv installs on its own if you lack it</span>
+├── <span class="f">README.md</span>
+│
+├── <span class="d">src/guide/</span>              <span class="c">the package. src-layout, so tests run against installed code</span>
+│   ├── <span class="f">__init__.py</span>         <span class="c">__version__, FORMAT_VERSION, API_VERSION — and the module map</span>
+│   ├── <span class="f">__main__.py</span>         <span class="c">python -m guide, which is how the daemon spawns itself</span>
+│   ├── <span class="f">errors.py</span>           <span class="c">every expected failure; the CLI catches GuideError once</span>
+│   ├── <span class="f">paths.py</span>            <span class="c">where things live: ~/.guide, daemon.json, daemon.log</span>
+│   ├── <span class="f">versioning.py</span>       <span class="c">the guide_version compatibility gate</span>
+│   ├── <span class="f">batch.py</span>            <span class="c">format-level helpers — never domain, never rendering</span>
+│   ├── <span class="f">ulid.py</span>             <span class="c">sortable collision-free batch ids, hand-rolled from the spec</span>
+│   ├── <span class="f">store.py</span>            <span class="c">the disk layer: atomic writes, derived answer fields</span>
+│   ├── <span class="f">source.py</span>           <span class="c">who is pushing — cwd, repo, branch, session id</span>
+│   ├── <span class="f">client.py</span>           <span class="c">the CLI's side of the HTTP surface</span>
+│   ├── <span class="f">cli.py</span>              <span class="c">push · wait · list · read · open · clean · serve · stop · status · skill</span>
+│   │
+│   ├── <span class="d">daemon/</span>
+│   │   ├── <span class="f">app.py</span>          <span class="c">the ASGI app, static mount, and the CSP header</span>
+│   │   ├── <span class="f">api.py</span>          <span class="c">the versioned routes at /api/v0</span>
+│   │   ├── <span class="f">service.py</span>      <span class="c">store + event bus + one lock per batch. No HTTP in sight</span>
+│   │   ├── <span class="f">events.py</span>       <span class="c">the SSE fan-out</span>
+│   │   ├── <span class="f">lifecycle.py</span>    <span class="c">binding a port, finding a daemon, starting and stopping one</span>
+│   │   └── <span class="f">skillpage.py</span>    <span class="c">the routes behind "install the skill"</span>
+│   │
+│   ├── <span class="d">skill/</span>
+│   │   ├── <span class="f">__init__.py</span>     <span class="c">the three install paths</span>
+│   │   └── <span class="f">SKILL.md</span>        <span class="c">the Claude Code skill. Ships inside the package on purpose</span>
+│   │
+│   └── <span class="d">web/</span>                <span class="c">the page. Served as-is; no build step, ever</span>
+│       ├── <span class="f">index.html</span>      <span class="c">the shell: a rail and a main pane</span>
+│       ├── <span class="f">render.js</span>       <span class="c">render(batch) -> cards. Pure: no fetch, no globals</span>
+│       ├── <span class="f">ui.js</span>           <span class="c">page chrome both pages draw: theme toggle, copy button</span>
+│       ├── <span class="f">transport.js</span>    <span class="c">where answers go: the daemon, or localStorage over file://</span>
+│       ├── <span class="f">app.js</span>          <span class="c">state, the rail, keyboard, live updates</span>
+│       ├── <span class="f">skill.html</span>      <span class="c">the install-the-skill page</span>
+│       ├── <span class="f">skill.js</span>
+│       ├── <span class="f">style.css</span>       <span class="c">the whole look, dark and light</span>
+│       └── <span class="f">favicon.svg</span>
+│
+├── <span class="d">tests/</span>
+│   ├── <span class="f">conftest.py</span>         <span class="c">every test gets its own GUIDE_HOME under tmp_path</span>
+│   ├── <span class="d">fixtures/</span>
+│   │   └── <span class="f">version_compat.json</span>  <span class="c">the shared version-gate truth table</span>
+│   ├── <span class="f">test_versioning.py</span>  <span class="c">the compatibility contract</span>
+│   ├── <span class="f">test_batch.py</span>       <span class="c">envelope validation and progress counting</span>
+│   ├── <span class="f">test_store.py</span>       <span class="c">the disk layer</span>
+│   ├── <span class="f">test_api.py</span>         <span class="c">the HTTP surface, including the security headers</span>
+│   ├── <span class="f">test_lifecycle.py</span>   <span class="c">the port race, discovery, start and stop</span>
+│   ├── <span class="f">test_security.py</span>    <span class="c">the same-origin guard and the store's path guard</span>
+│   ├── <span class="f">test_events.py</span>      <span class="c">the SSE bus, including its deliberate lossiness</span>
+│   ├── <span class="f">test_ulid.py</span>
+│   ├── <span class="f">test_cli.py</span>         <span class="c">exit codes and stdout/stderr discipline</span>
+│   └── <span class="f">test_web_assets.py</span>  <span class="c">the cross-language guards — see below</span>
+│
+├── <span class="d">schema/</span>                 <span class="c">machine-readable contract. The asset; treat it as such</span>
+│   ├── <span class="f">batch.schema.json</span>
+│   └── <span class="f">answers.schema.json</span>
+│
+├── <span class="d">examples/</span>               <span class="c">sample batches. Synthetic data only, always</span>
+│   └── <span class="f">verifier-triage.batch.json</span>
+│
+└── <span class="d">docs/</span>
+    ├── <span class="f">architecture.md</span>     <span class="c">the PRODUCT architecture — what it is, what it isn't</span>
+    ├── <span class="f">format.md</span>           <span class="c">the batch and answers JSON, annotated</span>
+    ├── <span class="f">versioning.md</span>       <span class="c">what happens on a version mismatch, and why it's strict</span>
+    ├── <span class="f">claude-side.md</span>      <span class="c">how an agent produces a batch and reads answers</span>
+    ├── <span class="f">roadmap.md</span>          <span class="c">three phases</span>
+    ├── <span class="f">open-questions.md</span>   <span class="c">what is still undecided, and what has been settled</span>
+    ├── <span class="d">decisions/</span>          <span class="c">ADRs. The durable artifact — the why behind each change</span>
+    ├── <span class="d">wiki/</span>               <span class="c">you are here. The ENGINEERING view; browsable over file://</span>
+    ├── <span class="d">backlog/</span>            <span class="c">"later, or a ticket, but not now"</span>
+    └── <span class="d">images/</span></div>
+
+          <h2>Where a new file goes</h2>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>You are adding…</th><th>It goes in…</th><th>Because</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>A new block or field type</td>
+                  <td><code>web/render.js</code> and <code>schema/batch.schema.json</code></td>
+                  <td>Block vocabulary belongs to the browser. If you find yourself adding one to a Python file, something has gone wrong.</td>
+                </tr>
+                <tr>
+                  <td>A new CLI subcommand</td>
+                  <td><code>cli.py</code> — one <code>cmd_*</code> function and one block in <code>build_parser</code></td>
+                  <td>The whole command surface is visible in one function, on purpose.</td>
+                </tr>
+                <tr>
+                  <td>A new HTTP endpoint</td>
+                  <td><code>daemon/api.py</code>, with the logic in <code>daemon/service.py</code></td>
+                  <td>Routes stay thin; anything needing a lock or an event lives in the service.</td>
+                </tr>
+                <tr>
+                  <td>Anything that touches disk</td>
+                  <td><code>store.py</code></td>
+                  <td>One writer, one place that stamps timestamps, one atomic-write helper.</td>
+                </tr>
+                <tr>
+                  <td>A design decision worth remembering</td>
+                  <td><code>docs/decisions/000N-*.md</code></td>
+                  <td>ADRs are the durable artifact. Plans and specs are not, and are deleted once the ADR exists.</td>
+                </tr>
+                <tr>
+                  <td>A tour, a diagram, an explanation</td>
+                  <td><code>docs/wiki/</code></td>
+                  <td>ADRs record <em>why</em> a decision was made; the wiki explains <em>how the thing works</em>.</td>
+                </tr>
+                <tr>
+                  <td>A "we should do this later"</td>
+                  <td><code>docs/backlog/</code></td>
+                  <td>And it gets deleted when it is done, not left as archaeology.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>What runs on your machine</h2>
+          <div class="tree">
+<span class="d">~/.guide/</span>                       <span class="c">$GUIDE_HOME overrides this. The test suite relies on that</span>
+├── <span class="f">daemon.json</span>              <span class="c">{url, port, pid, version, started_at} — a HINT, not proof</span>
+├── <span class="f">daemon.log</span>               <span class="c">where a backgrounded daemon's output goes</span>
+├── <span class="d">batches/</span>
+│   └── <span class="d">01JQ8FQ2X7K3M9VB4H0TZC5RWD/</span>   <span class="c">ULID: sorts by creation time, can't collide</span>
+│       ├── <span class="f">batch.json</span>       <span class="c">what the agent pushed</span>
+│       └── <span class="f">answers.json</span>     <span class="c">rewritten atomically on every change</span>
+└── <span class="d">archive/</span>                 <span class="c">only what `guide clean --archive` put there</span></div>
+
+          <div class="note">
+            <p>
+              <b>Why it is global rather than per-repo.</b> Two reasons, and both
+              are load-bearing. Sessions in different repos land in one inbox, which
+              is the entire point of the daemon. And batches may hold real client
+              data — keeping them out of every working tree means they cannot be
+              accidentally committed, which is a stronger guarantee than a
+              <code>.gitignore</code> line someone forgets to copy into the next
+              project.
+            </p>
+          </div>
+
+          <h2>The three files that stop two things drifting apart</h2>
+          <p>
+            This codebase has a Python half and a JavaScript half, and three facts
+            are unavoidably stated in both. Rather than hope, each is pinned by a
+            test:
+          </p>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>Stated twice</th><th>Pinned by</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    The version gate —
+                    <code>versioning.py</code> and <code>render.js</code>
+                  </td>
+                  <td>
+                    <code>tests/fixtures/version_compat.json</code>, the shared
+                    truth table. Change a rule there and both sides must move.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    The format version — <code>FORMAT_VERSION</code> and
+                    <code>VIEWER_VERSION</code>
+                  </td>
+                  <td>
+                    <code>test_web_assets.py</code> greps the JS and fails the build
+                    if they differ.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    The field vocabulary — <code>KNOWN_FIELDS</code> in the JS and
+                    the <code>field.type</code> enum in the schema
+                  </td>
+                  <td>Also <code>test_web_assets.py</code>.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <code>test_web_assets.py</code> also checks that every
+            <code>src=</code>/<code>href=</code> in the two HTML files resolves, and
+            that no inline <code>style="…"</code> attribute has crept back in — the
+            daemon serves <code>style-src 'self'</code>, so an inline style would be
+            silently dropped by the browser rather than loudly failing. Those are
+            the checks a bundler would have done for us, and this is the bill for
+            not having one.
+          </p>
+
+          <h2>Things deliberately absent</h2>
+          <ul>
+            <li><b>No <code>requirements.txt</code>.</b> <code>pyproject.toml</code> plus a committed <code>uv.lock</code>.</li>
+            <li><b>No <code>setup.py</code>, no <code>MANIFEST.in</code>.</b> Hatchling reads the pyproject.</li>
+            <li><b>No <code>node_modules/</code>, no <code>package.json</code>, no bundler config.</b> See <a href="decisions.html#adr7">ADR 0007</a>.</li>
+            <li><b>No database, no migrations.</b> Answers are files. This is stated as a non-goal in <code>docs/architecture.md</code> and it is worth defending.</li>
+            <li><b>No <code>.env</code>.</b> There is one environment variable, <code>GUIDE_HOME</code>, and it is optional.</li>
+          </ul>
+
+          <div class="pager">
+            <a href="walkthrough.html">← A batch, end to end</a>
+            <a href="architecture.html">How it's built →</a>
+          </div>
+          <footer class="wiki">docs/wiki/filesystem.html</footer>
+        </article>
+      </main>
+    </div>
+    <script src="wiki.js"></script>
+  </body>
+</html>

@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde wiki — how it's built</title>
+    <link rel="stylesheet" href="wiki.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <main class="main">
+        <article class="doc">
+          <div class="eyebrow">GUIde engineering wiki · reference</div>
+          <h1>How it's built</h1>
+          <p class="lede">
+            The seams, and the rules that keep them honest. Roughly 2,630 lines of
+            Python and 1,911 of JavaScript, arranged so that each piece can be
+            understood without the others.
+          </p>
+
+          <h2>The rule everything else follows</h2>
+          <div class="note">
+            <p>
+              <b>The renderer never learns your domain</b> — it knows block types
+              and field types, and nothing about verifier checks or regression
+              cases.
+            </p>
+            <p>
+              <b>The daemon never learns your content</b> — blocks, fields and
+              <code>meta</code> are opaque to it from end to end. This one is
+              stricter, and it has to be: if the daemon modelled block types, a
+              batch using a type newer than the installed daemon would be rejected,
+              and additive-only minors would stop being additive.
+            </p>
+          </div>
+          <p>
+            When you are unsure whether something belongs in a Python file or a
+            JavaScript one, that pair of sentences is usually the answer.
+          </p>
+
+          <h2>Layers</h2>
+          <figure class="dia">
+            <svg viewBox="0 0 880 430" role="img" aria-labelledby="modtitle">
+              <title id="modtitle">
+                Module dependency map: the CLI and the browser both sit on the HTTP
+                surface; the store is the only thing that touches disk.
+              </title>
+              <defs>
+                <marker id="a2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M0,0 L8,4 L0,8 z" fill="currentColor" />
+                </marker>
+              </defs>
+
+              <!-- Browser -->
+              <rect class="dsurface" x="500" y="16" width="360" height="112" rx="9" />
+              <text class="dmuted" x="516" y="36">the browser · no build step</text>
+              <rect class="dsurface" x="516" y="46" width="104" height="30" rx="6" />
+              <text class="dtext" x="568" y="66" text-anchor="middle">render.js</text>
+              <rect class="dsurface" x="632" y="46" width="104" height="30" rx="6" />
+              <text class="dtext" x="684" y="66" text-anchor="middle">transport.js</text>
+              <rect class="dsurface" x="748" y="46" width="96" height="30" rx="6" />
+              <text class="dtext" x="796" y="66" text-anchor="middle">app.js</text>
+              <text class="dmuted" x="516" y="98">render.js is pure — no fetch,</text>
+              <text class="dmuted" x="516" y="114">no globals, no transport</text>
+
+              <!-- CLI -->
+              <rect class="dsurface" x="20" y="16" width="300" height="112" rx="9" />
+              <text class="dmuted" x="36" y="36">the terminal</text>
+              <rect class="dsurface" x="36" y="46" width="120" height="30" rx="6" />
+              <text class="dtext" x="96" y="66" text-anchor="middle">cli.py</text>
+              <rect class="dsurface" x="172" y="46" width="132" height="30" rx="6" />
+              <text class="dtext" x="238" y="66" text-anchor="middle">client.py</text>
+              <text class="dmuted" x="36" y="98">source.py fills in cwd, repo,</text>
+              <text class="dmuted" x="36" y="114">branch, session id</text>
+
+              <!-- HTTP surface -->
+              <rect class="daccent" x="20" y="168" width="840" height="58" rx="9" stroke-dasharray="5 4" />
+              <text class="dtext" x="440" y="192" text-anchor="middle">daemon/api.py — the versioned surface at /api/v0</text>
+              <text class="dmuted" x="440" y="212" text-anchor="middle">the only contract between the two halves. Blocks and fields are Any here.</text>
+
+              <!-- service -->
+              <rect class="dsurface" x="150" y="256" width="240" height="52" rx="9" />
+              <text class="dtext" x="270" y="278" text-anchor="middle">daemon/service.py</text>
+              <text class="dmuted" x="270" y="296" text-anchor="middle">one asyncio.Lock per batch</text>
+
+              <rect class="dsurface" x="410" y="256" width="200" height="52" rx="9" />
+              <text class="dtext" x="510" y="278" text-anchor="middle">daemon/events.py</text>
+              <text class="dmuted" x="510" y="296" text-anchor="middle">SSE fan-out, lossy</text>
+
+              <rect class="dsurface" x="630" y="256" width="230" height="52" rx="9" />
+              <text class="dtext" x="745" y="278" text-anchor="middle">daemon/lifecycle.py</text>
+              <text class="dmuted" x="745" y="296" text-anchor="middle">the port bind is the lock</text>
+
+              <!-- store + disk -->
+              <rect class="dsurface" x="150" y="338" width="240" height="52" rx="9" />
+              <text class="dtext" x="270" y="360" text-anchor="middle">store.py</text>
+              <text class="dmuted" x="270" y="378" text-anchor="middle">the only thing that writes</text>
+
+              <rect class="dsurface" x="410" y="338" width="200" height="52" rx="9" />
+              <text class="dtext" x="510" y="360" text-anchor="middle">versioning · batch · ulid</text>
+              <text class="dmuted" x="510" y="378" text-anchor="middle">pure, no I/O, no state</text>
+
+              <rect class="dsurface" x="630" y="338" width="230" height="52" rx="9" />
+              <text class="dtext" x="745" y="360" text-anchor="middle">~/.guide/batches/</text>
+              <text class="dmuted" x="745" y="378" text-anchor="middle">batch.json · answers.json</text>
+
+              <g color="#7aa2f7">
+                <line class="dline-a" x1="170" y1="128" x2="170" y2="164" marker-end="url(#a2)" />
+                <line class="dline-a" x1="684" y1="128" x2="684" y2="164" marker-end="url(#a2)" />
+                <line class="dline-a" x1="270" y1="230" x2="270" y2="252" marker-end="url(#a2)" />
+                <line class="dline-a" x1="510" y1="230" x2="510" y2="252" marker-end="url(#a2)" />
+                <line class="dline-a" x1="745" y1="230" x2="745" y2="252" marker-end="url(#a2)" />
+                <line class="dline-a" x1="270" y1="312" x2="270" y2="334" marker-end="url(#a2)" />
+                <line class="dline-a" x1="392" y1="364" x2="406" y2="364" marker-end="url(#a2)" />
+                <line class="dline-a" x1="612" y1="364" x2="626" y2="364" marker-end="url(#a2)" />
+              </g>
+            </svg>
+            <figcaption>
+              Nothing above the dashed line imports anything below it except through
+              HTTP. That is what makes the browser half replaceable.
+            </figcaption>
+          </figure>
+
+          <h2>The Python modules, one line each</h2>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>Module</th><th>Lines</th><th>Knows about</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>versioning.py</code></td><td>119</td><td>Semver triples and the compatibility gate. No I/O, no state.</td></tr>
+                <tr><td><code>batch.py</code></td><td>118</td><td>The envelope: required keys, unique card ids, which fields are required. Never a block type.</td></tr>
+                <tr><td><code>ulid.py</code></td><td>70</td><td>Crockford base32, and the guard that stops an id becoming a path it should not.</td></tr>
+                <tr><td><code>store.py</code></td><td>443</td><td>The disk. Atomic writes, derived answer fields, and every timestamp in the system.</td></tr>
+                <tr><td><code>paths.py</code></td><td>51</td><td>Where things live: <code>~/.guide</code>, and the page inside the package.</td></tr>
+                <tr><td><code>source.py</code></td><td>90</td><td>Shelling out to git, and reading <code>$CLAUDE_CODE_SESSION_ID</code>. Fails silently by design.</td></tr>
+                <tr><td><code>errors.py</code></td><td>32</td><td>Six exception classes. The CLI catches the base once and prints one line.</td></tr>
+                <tr><td><code>client.py</code></td><td>106</td><td>Turning HTTP failures into sentences a user can read.</td></tr>
+                <tr><td><code>cli.py</code></td><td>448</td><td>Ten subcommands. One <code>cmd_*</code> function each, one <code>build_parser</code>.</td></tr>
+                <tr><td><code>daemon/api.py</code></td><td>227</td><td>Routes. Thin on purpose.</td></tr>
+                <tr><td><code>daemon/service.py</code></td><td>127</td><td>Locking, event publishing, and the push-time version gate.</td></tr>
+                <tr><td><code>daemon/events.py</code></td><td>85</td><td>Queues and SSE frames.</td></tr>
+                <tr><td><code>daemon/lifecycle.py</code></td><td>450</td><td>Sockets, subprocesses and signals. The one file with real concurrency in it.</td></tr>
+                <tr><td><code>daemon/app.py</code></td><td>162</td><td>Wiring, the static mount, and the two middlewares that fence the page in.</td></tr>
+                <tr><td><code>daemon/skillpage.py</code></td><td>59</td><td>Serving <code>SKILL.md</code> and writing it where Claude looks.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="lifecycle">The daemon lifecycle</h2>
+          <p>
+            This is the part with genuine concurrency in it, so it is worth reading
+            properly. The full reasoning is
+            <a href="../decisions/0004-daemon-lifecycle.md">ADR 0004</a>; this is
+            the mechanism.
+          </p>
+
+          <h3>The port bind is the lock</h3>
+          <p>
+            Two <code>guide push</code> calls in the same second both find no daemon
+            and both spawn one. They race to <code>bind()</code> port 7777, and the
+            kernel picks exactly one winner. There is no lockfile, because a
+            lockfile would be a worse version of a guarantee the operating system is
+            already making.
+          </p>
+          <p>
+            <strong>The subtlety is what the loser does.</strong> Scanning up to the
+            next port on <code>EADDRINUSE</code> is right when something
+            <em>else</em> holds 7777, and catastrophic when another GUIde daemon
+            does — you would end up with two daemons, two inboxes, and a coin flip
+            over which one a push reaches. So the loser asks what is there:
+          </p>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>What answers on the port</th><th>What the starting daemon does</th></tr></thead>
+              <tbody>
+                <tr><td><code>GET /api/v0/meta</code> → <code>name: guide</code></td><td>It lost the race. Exit quietly, exit code 0.</td></tr>
+                <tr><td>Anything else, or nothing at all</td><td>Some other program. Try the next port, up to 7796.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <code>SO_REUSEADDR</code> is deliberately <em>not</em> set. It would let
+            a second daemon bind alongside a lingering socket, and the refused bind
+            is precisely the signal this design runs on.
+          </p>
+
+          <h3>Discovery is a file plus a probe, never a file alone</h3>
+          <p>
+            <code>~/.guide/daemon.json</code> can outlive the process that wrote it.
+            It is a hint about where to look; the answer always comes from a live
+            probe. <code>discover()</code> tries the recorded URL and then the whole
+            scan range — twenty refused connections to closed loopback ports cost
+            nothing, and the scan closes a real hole: a daemon that landed on 7778
+            with no usable <code>daemon.json</code> would otherwise be invisible to
+            a push that only checked 7777.
+          </p>
+
+          <h3>Waiting outlives the daemon</h3>
+          <p>
+            <code>guide wait</code> never opens a socket. It polls the answers file
+            every 250ms. So a session waiting on a 200-card review survives a daemon
+            restart, a <code>guide stop</code>, or a crash — which is the one thing
+            you really do not want to depend on staying up for the length of time a
+            human takes to answer 200 questions.
+          </p>
+
+          <h2>Writing answers safely</h2>
+          <p>Two invariants, both in <code>store.py</code>:</p>
+          <ol class="steps">
+            <li>
+              <b>The daemon is the only writer.</b>
+              <p>
+                Browsers and CLI sessions send changes; the store applies them.
+                Concurrent agent sessions therefore cannot interleave writes to one
+                answers file. An <code>asyncio.Lock</code> per batch (held in
+                <code>service.py</code>) serialises the read-modify-write, and two
+                different batches never wait on each other.
+              </p>
+            </li>
+            <li>
+              <b>Every write is atomic.</b>
+              <p>
+                Content goes to a temp file <em>in the same directory</em> — so it
+                is guaranteed to be on the same filesystem — is
+                <code>fsync</code>'d, and is then moved into place with
+                <code>os.replace</code>. A crash mid-write leaves the previous file
+                intact; it can never leave half of one. Answers are written
+                continuously with no Save button, so "the file on disk is always
+                valid" is load-bearing rather than nice to have.
+              </p>
+            </li>
+          </ol>
+          <p>
+            <code>answers.json</code> is derived state with no shadow copy. Every
+            update reads the file, applies one change, recomputes the counters, and
+            writes the whole thing back. At human answering speed on a local disk
+            that is free, and it means there is exactly one source of truth to
+            reason about.
+          </p>
+
+          <h2>The version gate, and degrading loudly</h2>
+          <p>
+            For most formats a version mismatch means an ugly page. For this one it
+            means a human makes a judgment call on evidence they cannot fully see,
+            and an agent then acts on that judgment. So:
+          </p>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Batch vs viewer</th><th>Behaviour</th></tr></thead>
+              <tbody>
+                <tr><td>Different major, either direction</td><td><b>Hard error.</b> Refuse to render at all.</td></tr>
+                <tr><td>Pre-1.0, different minor</td><td><b>Hard error.</b> While the format is <code>0.x</code>, minor acts as major.</td></tr>
+                <tr><td>Batch minor ahead</td><td><b>Warn, and render.</b> Unknown blocks and fields fall back visibly.</td></tr>
+                <tr><td>Batch minor behind, or any patch difference</td><td>Silent. This is what additive-only minors buy.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>A minor-ahead batch degrades in three visible places at once:</p>
+          <ul>
+            <li>A banner at the top of the batch.</li>
+            <li>
+              <strong>A note on the card where it happened</strong>, in place of the
+              block it could not draw, with the raw JSON collapsed underneath. A
+              banner alone is not enough — someone scrolling to card 12 needs to
+              know <em>at card 12</em> that they are judging on partial evidence.
+            </li>
+            <li>
+              <code>degraded_cards</code> in the answers file, so the reading agent
+              can discount those answers or re-ask after an update.
+            </li>
+          </ul>
+          <p>
+            And an unsupported <em>required</em> field blocks its card outright.
+            Better an obviously stuck card than a silently skipped one.
+          </p>
+
+          <h2>Security posture</h2>
+          <p>
+            There are no accounts, because the only <em>process</em> that can reach
+            the daemon is one already running as you. But "bound to
+            <code>127.0.0.1</code>, so there is nobody else on the socket" is not
+            quite true, and it is worth being precise about why:
+            <strong>every web page in every open tab is also on that
+            socket.</strong>
+          </p>
+          <div class="note bad">
+            <p>
+              <b>The hole that closed.</b> A cross-origin <code>POST</code> with no
+              custom headers is a CORS <em>simple request</em> — no preflight, so
+              the browser sends it and merely hides the response. Hiding the
+              response does not undo the side effect. Any page you happened to
+              visit could <code>POST /api/v0/shutdown</code> and kill your daemon
+              mid-review.
+            </p>
+            <p>
+              So a <code>SameOriginOnly</code> middleware gates every
+              state-changing method. A browser labels its own requests
+              (<code>Sec-Fetch-Site</code>, and <code>Origin</code> when
+              cross-origin); the CLI, being a plain HTTP client, sends neither. The
+              rule: trust an explicit same-origin label, trust the absence of any
+              label, refuse everything else. Reads are never blocked.
+            </p>
+          </div>
+          <p>
+            Ids are checked before they become paths, too: <code>Store</code>
+            refuses any id that is not a ULID, so no caller-supplied string is ever
+            joined to the store root unvalidated.
+          </p>
+          <p>
+            That leaves the browser, and specifically the fact that batch content
+            is agent-authored.
+          </p>
+          <div class="cards">
+            <div class="card">
+              <div class="k">first defence</div>
+              <h4>Safe by construction</h4>
+              <p>
+                The renderer builds DOM nodes and sets <code>textContent</code>. The
+                single exception, <code>md()</code>, escapes every fragment before
+                any transform runs and can only emit tags from a fixed list — none
+                of which take an attribute. Links are absent for exactly that
+                reason.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">second defence</div>
+              <h4>A CSP that assumes the first has a bug</h4>
+              <p>
+                <code>default-src 'none'</code>, no inline script, no remote
+                anything, no form target, no framing. Injected markup would have
+                nowhere to go.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">a rule, made mechanical</div>
+              <h4>No outbound requests</h4>
+              <p>
+                The docs always said no CDN, no fonts, no analytics. The CSP means
+                the page cannot make one even if someone adds it by accident.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">format rule, enforced</div>
+              <h4>Images are data URIs or nothing</h4>
+              <p>
+                A batch is self-contained. The renderer refuses any other
+                <code>src</code> with a visible explanation rather than a blank box.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">checked before use</div>
+              <h4>Ids are ULIDs or nothing</h4>
+              <p>
+                Every path the store builds goes through one guard, so
+                <code>../..</code> can never name a directory.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">writes only</div>
+              <h4>Same-origin, or 403</h4>
+              <p>
+                A page in another tab cannot stop your daemon, answer your cards,
+                or delete a batch. Reads are unaffected.
+              </p>
+            </div>
+          </div>
+          <p>
+            The consequence you will actually run into:
+            <code>style-src 'self'</code> means <strong>no inline
+            <code>style="…"</code> attributes anywhere in the page</strong>. The
+            browser drops them silently, so <code>test_web_assets.py</code> fails the
+            build if one appears. Full reasoning in
+            <a href="../decisions/0006-markdown-by-construction.md">ADR 0006</a>.
+          </p>
+
+          <h2>Testing strategy</h2>
+          <p>
+            196 tests, in about a second. The shape follows the layering: the format
+            contract is tested independently of the UI, which was the requirement
+            the original tech-architecture plan set.
+          </p>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th>Layer</th><th>How it is tested</th></tr></thead>
+              <tbody>
+                <tr><td>The version gate</td><td>Driven from a shared JSON truth table, so the Python and the prose cannot disagree.</td></tr>
+                <tr><td>The envelope</td><td>Directly, including the "<code>guide_version</code> must be the first key" rule.</td></tr>
+                <tr><td>The store</td><td>Against a real temp directory. Includes proving the batch wins over spoofed <code>title</code>/<code>meta</code> from a caller.</td></tr>
+                <tr><td>The HTTP surface</td><td>FastAPI's <code>TestClient</code>, over a store rooted in <code>tmp_path</code>.</td></tr>
+                <tr><td>The CLI</td><td><code>main([...])</code> called directly, asserting exit codes and which stream each line went to.</td></tr>
+                <tr><td>The daemon lifecycle</td><td>Real ephemeral sockets for the bind race; monkeypatched <code>httpx</code> and <code>os.kill</code> for everything else. No test touches port 7777 or spawns a daemon.</td></tr>
+                <tr><td>The security posture</td><td>Every state-changing route is driven with hostile <code>Origin</code>/<code>Sec-Fetch-Site</code> headers and must answer 403; reads must not.</td></tr>
+                <tr><td>The page</td><td>Not unit-tested. The cross-language guards in <code>test_web_assets.py</code> catch drift; the rest is checked by reading it and by using it.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note warn">
+            <p>
+              <b>The honest gap.</b> There is no committed browser test. The page
+              was smoke-tested in a real DOM before release — every block and field
+              type rendered, the version gate checked against the same truth table
+              the Python uses, and <code>md()</code>'s output parsed to confirm it
+              emits only allowed tags and no attribute but one literal
+              <code>class</code>. That harness needed jsdom, and a Node dependency
+              is exactly what this repo does not have, so it stayed out of the tree.
+              Keyboard navigation, caret preservation and the on-screen degrade path
+              are verified by hand. If this grows, that is the first place a real bug
+              will hide.
+            </p>
+          </div>
+
+          <div class="pager">
+            <a href="filesystem.html">← The file system</a>
+            <a href="decisions.html">Why it's built that way →</a>
+          </div>
+          <footer class="wiki">docs/wiki/architecture.html</footer>
+        </article>
+      </main>
+    </div>
+    <script src="wiki.js"></script>
+  </body>
+</html>

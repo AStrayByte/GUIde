@@ -100,8 +100,8 @@ of data behind one line and keep cards scannable.
 | `text`     | `text`, `format`: `plain` \| `pre` \| `markdown` | Paragraph, monospace block, or rendered markdown     |
 | `callout`  | `text`, `footnote`, `tone`                       | Left-bordered highlight — the "why this matters" box |
 | `code`     | `code`, `language`                               | Syntax-highlighted block                             |
-| `table`    | `columns[]`, `rows[]`, `note`, `truncated`       | Scrollable table                                     |
-| `keyvalue` | `pairs`                                          | Two-column definition list                           |
+| `table`    | `columns[]`, `rows[]`, `note`, `truncated`       | Scrollable table; a row is an object or an array     |
+| `keyvalue` | `pairs[]` of `{key, value}`                       | Two-column list; the order of the pairs is preserved |
 | `diff`     | `diff` (unified diff text)                       | Colored +/- diff                                     |
 | `json`     | `value`                                          | Collapsible JSON tree                                |
 | `image`    | `src` (data URI), `alt`, `caption`               | An image                                             |

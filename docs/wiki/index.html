@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUIde wiki — overview</title>
+    <link rel="stylesheet" href="wiki.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <main class="main">
+        <article class="doc">
+          <div class="eyebrow">GUIde engineering wiki · start here</div>
+          <h1>What this is, and how to run it</h1>
+          <p class="lede">
+            GUIde is a local inbox for the questions your agents need answered. An
+            agent writes a JSON file of judgment calls with the evidence attached,
+            pushes it to a daemon on your machine, and a browser page renders it as
+            cards with buttons. You click through them. The answers land back on
+            disk as JSON and the agent picks up where it left off.
+          </p>
+
+          <div class="chips">
+            <span class="chip">runs on: <b>127.0.0.1</b></span>
+            <span class="chip">language: <b>Python 3.11+</b></span>
+            <span class="chip">dependencies: <b>three</b></span>
+            <span class="chip">build step: <b>none</b></span>
+            <span class="chip">accounts: <b>none</b></span>
+          </div>
+
+          <h2>The one idea</h2>
+          <p>
+            <strong>The UI is a pure function of a JSON file.</strong> Everything
+            else — the format, the daemon, the CLI, the skill — exists to get a
+            batch into that function and answers back out.
+          </p>
+          <pre><code>render(batch)  -&gt; a page of cards
+collect(page)  -&gt; answers</code></pre>
+          <p>
+            The corollary matters as much: <strong>the renderer never learns your
+            domain.</strong> It does not know what a "verifier check" or a
+            "regression case" is. Domain data rides along in an opaque
+            <code>meta</code> object that is passed through untouched and echoed
+            back in the answers. That single rule is what stops GUIde from slowly
+            becoming specific to one project.
+          </p>
+
+          <h2>Four words, used consistently everywhere</h2>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr><th>Term</th><th>What it is</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>batch</b></td><td>One JSON file — a list of questions an agent wants answered, with evidence</td></tr>
+                <tr><td><b>card</b></td><td>One question in that batch, as drawn on screen: title, evidence, buttons</td></tr>
+                <tr><td><b>answers</b></td><td>The JSON file that comes back out when you're done</td></tr>
+                <tr><td><b>inbox</b></td><td>Every batch currently waiting on you, across all your sessions</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Running it</h2>
+          <p>
+            The toolchain is <a href="https://docs.astral.sh/uv/">uv</a>. It is a
+            single static binary that manages its own Python — it does not touch a
+            system Python, a Homebrew Python, or an existing pyenv.
+          </p>
+
+          <h3>From a clone, for development</h3>
+          <pre><code># installs uv into ~/.local/bin, and nothing else, anywhere
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+cd GUIde
+uv sync                 # creates ./.venv with a managed Python 3.12
+uv run guide status     # is anything running, and what's waiting
+uv run pytest           # 196 tests
+uv run ruff check src tests</code></pre>
+
+          <h3>As a tool you actually use</h3>
+          <pre><code>uv tool install --from . guide-cli    # from a clone; not on PyPI yet
+guide status</code></pre>
+          <p>
+            <code>uv tool install</code> puts <code>guide</code> on your PATH in its
+            own isolated environment. <code>uvx --from . guide status</code> runs it
+            without installing anything at all.
+          </p>
+
+          <h3>The loop, in four commands</h3>
+          <pre><code>guide push ./questions.json   # starts the daemon if it isn't running
+guide list                    # what's waiting, across every session
+guide open                    # the inbox, in a browser
+guide wait &lt;id&gt;               # blocks until you press Done, then prints the answers</code></pre>
+
+          <div class="note">
+            <p>
+              <b>Teaching Claude to use it.</b> Run <code>guide skill install</code>,
+              or open <code>http://127.0.0.1:7777/skill</code> — the daemon serves an
+              install page with four paths, including a prompt you can paste into any
+              Claude Code session to have it install the skill itself. The page knows
+              which <code>SKILL.md</code> matches your installed build, so its
+              instructions cannot go stale.
+            </p>
+          </div>
+
+          <h2>Everything runs on your machine</h2>
+          <p>
+            Batches will contain real data. The local-only model handles that by
+            construction rather than by policy — nothing is transmitted, because
+            there is nothing to transmit to:
+          </p>
+          <div class="cards">
+            <div class="card">
+              <div class="k">bound to loopback</div>
+              <h4>127.0.0.1, never 0.0.0.0</h4>
+              <p>There is no auth because there is nobody else on the socket.</p>
+            </div>
+            <div class="card">
+              <div class="k">enforced by header</div>
+              <h4>No outbound requests</h4>
+              <p>
+                A Content-Security-Policy of <code>default-src 'none'</code> means
+                the page cannot load a CDN, a font, or an analytics script even if
+                someone adds one.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">outside every repo</div>
+              <h4>Batches live in ~/.guide/</h4>
+              <p>
+                So they cannot be accidentally committed. Structural, not a
+                <code>.gitignore</code> line someone forgets to copy.
+              </p>
+            </div>
+            <div class="card">
+              <div class="k">always</div>
+              <h4>Nothing in examples/ is real</h4>
+              <p>Synthetic data only, in every example and every test fixture.</p>
+            </div>
+          </div>
+
+          <h2>Where to go next</h2>
+          <div class="cards">
+            <div class="card">
+              <h4><a href="walkthrough.html">A batch, end to end →</a></h4>
+              <p>
+                Follow one push from an agent's JSON through the daemon, onto the
+                page, and back to disk. The fastest way to hold the whole thing in
+                your head.
+              </p>
+            </div>
+            <div class="card">
+              <h4><a href="filesystem.html">The file system →</a></h4>
+              <p>
+                Every directory and every file in the repo, plus what
+                <code>~/.guide/</code> looks like on a running machine.
+              </p>
+            </div>
+            <div class="card">
+              <h4><a href="architecture.html">How it's built →</a></h4>
+              <p>
+                Module boundaries, the HTTP surface, the daemon lifecycle, the
+                version gate, and the rules that keep the seams honest.
+              </p>
+            </div>
+            <div class="card">
+              <h4><a href="decisions.html">Why it's built that way →</a></h4>
+              <p>
+                Seven ADRs, summarised, with what each one costs. Read this before
+                you change anything structural.
+              </p>
+            </div>
+          </div>
+
+          <div class="pager">
+            <span></span>
+            <a href="walkthrough.html">A batch, end to end →</a>
+          </div>
+          <footer class="wiki">
+            docs/wiki/index.html · open it straight from the repo, no server needed
+          </footer>
+        </article>
+      </main>
+    </div>
+    <script src="wiki.js"></script>
+  </body>
+</html>
