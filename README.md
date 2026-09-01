@@ -294,6 +294,7 @@ from a clone with no server:
 | [docs/format.md](docs/format.md)                 | The batch + answers JSON, annotated                    |
 | [docs/versioning.md](docs/versioning.md)         | The version declaration and what happens on a mismatch |
 | [docs/claude-side.md](docs/claude-side.md)       | How Claude writes a batch and reads answers            |
+| [docs/terminal-pane.md](docs/terminal-pane.md)   | Answering in a terminal pane instead of a browser window |
 | [docs/roadmap.md](docs/roadmap.md)               | Three phases                                           |
 | [docs/decisions/](docs/decisions/)               | ADRs — the durable record of every decision            |
 | [docs/open-questions.md](docs/open-questions.md) | What's still undecided                                 |
