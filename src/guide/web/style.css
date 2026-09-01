@@ -379,8 +379,13 @@ pre {
 .block pre.codeblock {
   white-space: pre;
 }
+/* Its own line, not a float. A float is placed against the *visible* right edge,
+   and a `white-space: pre` line does not wrap around one — so any first line
+   wider than the block ran straight underneath the label. Right-aligned block
+   instead: the label can never collide with code, at any pane width. */
 .lang {
-  float: right;
+  display: block;
+  text-align: right;
   font: 10px var(--mono);
   color: var(--dim);
   text-transform: uppercase;
@@ -526,14 +531,23 @@ details.blk > .body .tablewrap {
   border: 0;
 }
 
+/* `minmax(0, 1fr)`, not `1fr`. `1fr` means `minmax(auto, 1fr)`, and that `auto`
+   floor is the item's min-content width — for a `white-space: pre` code block
+   that is its longest line, so the tracks refused to shrink and the panes
+   overflowed the card instead. A zero floor lets each pane take half the width
+   and hands the overflow to the `pre`'s own horizontal scroll, which is where
+   a long line was always meant to go. */
 .cols {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 @media (max-width: 720px) {
   .cols {
-    grid-template-columns: 1fr;
+    /* Single column, but still `minmax(0, ...)` — the `auto` floor is exactly as
+       harmful with one track as with two, and a narrow viewport is where a long
+       `pre` line is most likely to exceed the card. */
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .pane {

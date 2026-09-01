@@ -32,6 +32,7 @@ from typing import Any
 from guide import FORMAT_VERSION
 from guide.batch import fields_of, is_answered, validate_envelope
 from guide.errors import AmbiguousBatchId, BatchNotFound, InvalidBatch
+from guide.paths import ensure_home
 from guide.paths import home as default_home
 from guide.ulid import is_ulid, new_ulid
 
@@ -137,8 +138,15 @@ class Store:
                 "created_at": document.get("created_at") or utc_now_iso(),
             }
         )
+        # Locks the root before anything is created under it — mkdir(parents=True)
+        # below would otherwise create it (and `batches/`) at the umask's default
+        # mode as a side effect of reaching the leaf.
+        ensure_home(self.home)
         directory = self.root / stored["id"]
-        directory.mkdir(parents=True, exist_ok=True)
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # mkdir's mode is masked by the process umask, so it cannot be trusted
+        # alone — chmod afterward reasserts the exact bits regardless of umask.
+        directory.chmod(0o700)
         _write_json(directory / BATCH_FILENAME, stored)
         _write_json(directory / ANSWERS_FILENAME, _blank_answers(stored))
         return stored
@@ -280,7 +288,8 @@ class Store:
         """Move a batch out of the inbox and into ``~/.guide/archive/``."""
         source = self._dir(batch_id)
         destination = self.archive_root / batch_id
-        destination.parent.mkdir(parents=True, exist_ok=True)
+        ensure_home(self.home)
+        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         shutil.rmtree(destination, ignore_errors=True)
         shutil.move(str(source), str(destination))
         return destination
@@ -430,10 +439,18 @@ def _write_json(path: Path, data: dict[str, Any]) -> None:
     are fsync'd; the directory entry is not, so a power cut in the microsecond
     after the rename could still lose it. That is the right trade for a local tool,
     and it is stated rather than implied.
+
+    The temporary file is opened via ``os.open`` rather than ``Path.open`` so its
+    mode can be set at creation — ``Path.open`` has no mode argument, and
+    ``chmod``-ing after the fact would leave a window where the file (which may
+    hold real client data) briefly exists at the umask's default mode.
+    ``os.replace`` carries the mode across the rename, so the file that lands
+    at ``path`` is 0600 too.
     """
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
-        with temporary.open("w", encoding="utf-8") as handle:
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             json.dump(data, handle, indent=2, ensure_ascii=False)
             handle.write("\n")
             handle.flush()

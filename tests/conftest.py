@@ -43,8 +43,14 @@ def app(store):
 
 @pytest.fixture
 def client(app):
-    """A synchronous test client for the daemon."""
-    with TestClient(app) as test_client:
+    """A synchronous test client for the daemon.
+
+    ``TestClient`` defaults to ``Host: testserver``, which is not a loopback
+    host — every real caller of this daemon (the CLI, the page it serves) is
+    loopback, so pin the base URL to one to exercise the suite as a real
+    caller rather than tripping the daemon's own Host allowlist.
+    """
+    with TestClient(app, base_url="http://127.0.0.1") as test_client:
         yield test_client
 
 

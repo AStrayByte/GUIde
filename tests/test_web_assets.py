@@ -74,6 +74,21 @@ def test_ui_js_exists_and_is_loaded_after_render_js_in_both_pages() -> None:
         assert render_pos < ui_pos, f"{html_name} must load render.js before ui.js"
 
 
+def test_image_block_accepts_only_the_explicit_raster_mime_allowlist() -> None:
+    """Batches are self-contained, so an ``image`` block is a data URI, never a
+    remote URL — the subtype must be checked against an explicit allowlist
+    rather than the broader ``image/`` prefix, so an SVG data URI (which can
+    carry a `<script>`) falls through to the labeled ``fallback()`` path
+    instead of being drawn."""
+    render_js = (WEB_DIR / "render.js").read_text(encoding="utf-8")
+    match = re.search(r"data:image\\/\(([a-z|]+)\)", render_js)
+    assert match is not None, "render.js must gate the image block on an explicit subtype list"
+    accepted = set(match.group(1).split("|"))
+
+    assert accepted == {"png", "jpeg", "gif", "webp", "avif"}
+    assert "svg+xml" not in accepted
+
+
 def test_no_inline_style_attributes_or_style_blocks_in_web_assets() -> None:
     """The daemon serves ``style-src 'self'`` — an inline style would be silently dropped."""
     offenders = [

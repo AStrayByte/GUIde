@@ -39,13 +39,20 @@ import uvicorn
 
 from guide import API_PREFIX, __version__
 from guide.errors import DaemonUnreachable, GuideError
-from guide.paths import daemon_file, home, log_file
+from guide.paths import daemon_file, ensure_home, home, log_file
 from guide.store import Store, utc_now_iso
 
 from .app import create_app
 
 HOST = "127.0.0.1"
-"""Loopback, never ``0.0.0.0``. There is no auth because there is no one else here."""
+"""Loopback, never ``0.0.0.0``.
+
+There is still no per-request auth token — but "no one else here" turned out
+to be qualified: a page served from a domain that resolves to 127.0.0.1 (DNS
+rebinding) is on this socket too, from the browser's point of view. What
+actually stands in for auth is ``LoopbackHostOnly`` in ``daemon/app.py``,
+which checks the Host header a rebound request cannot spoof its way around.
+"""
 
 DEFAULT_PORT = 7777
 PORT_SCAN_LIMIT = 20
@@ -229,7 +236,7 @@ def _spawn() -> subprocess.Popen[bytes]:
     terminal that pushed — or the Claude session that pushed — does not take the
     inbox down with it. That is the whole point of a daemon here.
     """
-    home().mkdir(parents=True, exist_ok=True)
+    ensure_home()
     with log_file().open("a", encoding="utf-8") as log:
         log.write(f"\n--- starting guide {__version__} at {utc_now_iso()} ---\n")
         log.flush()
@@ -260,6 +267,15 @@ def serve(port: int | None = None, store: Store | None = None) -> None:
         AlreadyRunning: another daemon holds the port. Not an error at the
             command line, just news; ``guide serve`` reports it and exits 0.
     """
+    # `_write_info`, below, routes its `daemon_file().parent` creation through
+    # `paths.ensure_home()`, which reasserts 0700 unconditionally — including
+    # on an install that predates that guarantee and already sits at the old
+    # 0755 default. That covers every `serve` (foreground or spawned) without
+    # a separate check here. This does not touch anything already written
+    # under ~/.guide with the old, looser mode — see `store._write_json` and
+    # the mkdir call sites for the per-file/per-batch story — but a 0700 home
+    # is unreadable and untraversable by anyone else on the machine regardless
+    # of what its children are still set to.
     listener, bound_port = _bind(port)
     url = f"http://{HOST}:{bound_port}"
     _write_info(
@@ -438,9 +454,23 @@ def _pid_alive(pid: int) -> bool:
 
 
 def _write_info(info: DaemonInfo) -> None:
-    """Record where this daemon is listening."""
-    daemon_file().parent.mkdir(parents=True, exist_ok=True)
-    daemon_file().write_text(json.dumps(info.as_dict(), indent=2) + "\n", encoding="utf-8")
+    """Record where this daemon is listening.
+
+    ``daemon.json`` is discovery metadata, not batch content, but it is still
+    written 0600 up front — same reasoning and same ``os.open`` mechanism as
+    ``store._write_json``: ``Path.write_text`` has no mode argument, and a
+    ``chmod`` after the write would leave the file briefly at the umask's
+    default mode instead of never existing at anything but 0600.
+    """
+    ensure_home(daemon_file().parent)
+    payload = json.dumps(info.as_dict(), indent=2) + "\n"
+    descriptor = os.open(daemon_file(), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    # The mode above only applies on create — an existing file (e.g. an upgrade
+    # over an old install written 0644) keeps its old mode through O_TRUNC.
+    # fchmod forces 0600 unconditionally regardless of whether it pre-existed.
+    os.fchmod(descriptor, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write(payload)
 
 
 def _clear_info() -> None:

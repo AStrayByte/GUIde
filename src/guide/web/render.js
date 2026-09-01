@@ -320,12 +320,24 @@
     /* The format says data URIs or nothing: a batch is self-contained, and a
        remote image would both leak that the batch was opened and fail offline.
        The daemon's CSP blocks remote sources anyway; refusing here is what makes
-       the failure legible instead of a blank box. */
+       the failure legible instead of a blank box.
+
+       The subtype is an explicit allowlist rather than the broader `image/`
+       prefix. `data:image/svg+xml` matching that prefix is harmless today — an
+       SVG used as `<img src>` cannot run script — but that is a property of how
+       it is used here, not of the format, and this is the one gate a future
+       change to how images are rendered would otherwise have to remember to
+       add back. Narrowing it now costs nothing a legitimate batch needs. */
     image: (block) => {
-      if (!/^data:image\//i.test(String(block.src || ""))) {
+      if (
+        !/^data:image\/(png|jpeg|gif|webp|avif)[;,]/i.test(
+          String(block.src || ""),
+        )
+      ) {
         return fallback(
-          "This image is not a data URI. Batches are self-contained, so remote " +
-            "images are not loaded.",
+          "This image is not a data URI in a supported format (png, jpeg, gif, " +
+            "webp, avif). Batches are self-contained, so remote images are not " +
+            "loaded.",
           block,
         );
       }

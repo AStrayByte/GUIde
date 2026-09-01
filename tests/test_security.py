@@ -1,11 +1,14 @@
-"""Pins the same-origin guard in ``guide.daemon.app`` and the store's path-traversal guard.
+"""Pins the origin/Host guards in ``guide.daemon.app`` and the store's path-traversal guard.
 
 The daemon binds ``127.0.0.1``, but every web page in every open tab is on that
 socket too. A cross-origin ``POST`` with no custom headers is a *simple
 request* — no preflight — so a page you merely had open could otherwise stop
 the daemon or install a skill file. ``SameOriginOnly`` is the guard against
-that; ``Store._dir`` is the guard against a batch id that is not really an id
-but an attempt to walk out of the store.
+that; ``LoopbackHostOnly`` is the guard against a page served from a domain
+that merely resolves to 127.0.0.1, which passes the same-origin check because
+it controls both sides of the Origin-vs-Host comparison; ``Store._dir`` is the
+guard against a batch id that is not really an id but an attempt to walk out
+of the store.
 """
 
 from __future__ import annotations
@@ -100,6 +103,48 @@ def test_origin_matching_the_requests_own_host_is_allowed_through(client: TestCl
 def test_get_is_never_blocked_regardless_of_headers(client: TestClient) -> None:
     assert client.get(f"{API_PREFIX}/batches", headers=_CROSS_SITE).status_code == 200
     assert client.get("/", headers=_CROSS_SITE).status_code == 200
+
+
+# -- LoopbackHostOnly: the Host header guard --------------------------------
+#
+# SameOriginOnly compares Origin against Host — a rebound page (a domain that
+# resolves to 127.0.0.1) controls both sides of that comparison equally, so it
+# always passes and only guards non-safe methods. LoopbackHostOnly closes that:
+# it checks Host against a fixed allowlist the attacker has no way to spoof,
+# and it applies to every method, GET included, because an unauthenticated
+# same-origin read is damage enough on its own.
+
+_LOOPBACK_HOSTS = ["127.0.0.1", "localhost", "[::1]"]
+
+
+def test_foreign_host_is_rejected_on_a_plain_get(client: TestClient) -> None:
+    response = client.get(f"{API_PREFIX}/batches", headers={"Host": "evil.example"})
+    assert response.status_code == 421
+
+
+def test_foreign_host_is_rejected_on_a_state_changing_route(client: TestClient) -> None:
+    response = client.post(
+        f"{API_PREFIX}/batches", json=make_batch(), headers={"Host": "evil.example"}
+    )
+    assert response.status_code == 421
+
+
+@pytest.mark.parametrize("host", _LOOPBACK_HOSTS)
+def test_each_loopback_host_is_accepted_regardless_of_port(
+    client: TestClient, host: str
+) -> None:
+    """The daemon scans ports 7777-7796, so the bound port varies request to
+    request — only the hostname half of Host may gate the decision."""
+    response = client.get(f"{API_PREFIX}/batches", headers={"Host": f"{host}:7796"})
+    assert response.status_code == 200
+
+
+def test_foreign_host_421_still_carries_the_security_headers(client: TestClient) -> None:
+    response = client.get(f"{API_PREFIX}/batches", headers={"Host": "evil.example"})
+    assert response.status_code == 421
+    assert "'none'" in response.headers["content-security-policy"]
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["referrer-policy"] == "no-referrer"
 
 
 # -- Store: the batch-id path guard -----------------------------------------
