@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7aa2f7" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#7aa2f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowWarm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0af68" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#e0af68" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1.3" cy="1.3" r="1.3" fill="#1c2028"/>
+    </pattern>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <!-- base -->
+  <rect width="1280" height="640" fill="#0f1115"/>
+  <rect width="1280" height="640" fill="url(#dots)"/>
+  <ellipse cx="1120" cy="60" rx="420" ry="320" fill="url(#glowBlue)"/>
+  <ellipse cx="220" cy="620" rx="380" ry="260" fill="url(#glowWarm)"/>
+
+  <!-- ============ LEFT: brand + copy ============ -->
+
+  <!-- logomark -->
+  <rect x="64" y="56" width="56" height="56" rx="13" fill="#16181d" stroke="#272b34"/>
+  <rect x="76" y="70" width="32" height="7" rx="3.5" fill="#aab2c0"/>
+  <rect x="76" y="83" width="32" height="7" rx="3.5" fill="#aab2c0"/>
+  <rect x="76" y="96" width="19" height="7" rx="3.5" fill="#7aa2f7"/>
+
+  <!-- wordmark -->
+  <text x="136" y="97" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="36" letter-spacing="-0.5" fill="#dde2ea">GU<tspan fill="#7aa2f7">I</tspan>de</text>
+
+  <!-- headline -->
+  <text font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="50" letter-spacing="-1.2" fill="#eef1f6">
+    <tspan x="64" y="228">A local inbox for the</tspan>
+    <tspan x="64" y="290">questions your agents</tspan>
+    <tspan x="64" y="352">need answered.</tspan>
+  </text>
+
+  <!-- command pipeline -->
+  <g font-family="Menlo, monospace" font-size="15.5" fill="#c3c9d3">
+    <rect x="64"  y="424" width="138" height="40" rx="8" fill="#1c1f26" stroke="#272b34"/>
+    <text x="133" y="449" text-anchor="middle">guide push</text>
+
+    <text x="216" y="450" text-anchor="middle" fill="#5f6875" font-size="18">→</text>
+
+    <rect x="230" y="424" width="138" height="40" rx="8" fill="#1c1f26" stroke="#272b34"/>
+    <text x="299" y="449" text-anchor="middle">guide open</text>
+
+    <text x="382" y="450" text-anchor="middle" fill="#5f6875" font-size="18">→</text>
+
+    <rect x="396" y="424" width="138" height="40" rx="8" fill="#1c1f26" stroke="#272b34"/>
+    <text x="465" y="449" text-anchor="middle">guide wait</text>
+
+    <text x="548" y="450" text-anchor="middle" fill="#5f6875" font-size="18">→</text>
+
+    <rect x="562" y="424" width="138" height="40" rx="8" fill="#1c1f26" stroke="#272b34"/>
+    <text x="631" y="449" text-anchor="middle">guide read</text>
+  </g>
+
+  <!-- footer repo line -->
+  <text x="64" y="576" font-family="Menlo, monospace" font-size="16" fill="#5f6875">github.com/AStrayByte/GUIde</text>
+
+  <!-- ============ RIGHT: stacked card mock ============ -->
+
+  <!-- shadow -->
+  <ellipse cx="985" cy="560" rx="260" ry="34" fill="#000000" opacity="0.45" filter="url(#soft)"/>
+
+  <!-- back card (out of focus, second card in the stack) -->
+  <g transform="translate(1000,300) rotate(-9) translate(-230,-175)" opacity="0.55">
+    <rect width="460" height="350" rx="16" fill="#16181d" stroke="#272b34"/>
+    <rect x="24" y="28" width="220" height="14" rx="4" fill="#272b34"/>
+    <rect x="24" y="60" width="160" height="10" rx="4" fill="#20242c"/>
+    <rect x="24" y="110" width="412" height="60" rx="6" fill="#1c1f26"/>
+    <rect x="24" y="190" width="412" height="60" rx="6" fill="#1c1f26"/>
+  </g>
+
+  <!-- front card -->
+  <g transform="translate(970,320) rotate(4) translate(-230,-175)">
+    <rect width="460" height="350" rx="16" fill="#181b21" stroke="#343a45" stroke-width="1.5"/>
+
+    <text x="24" y="42" font-family="Menlo, monospace" font-weight="700" font-size="19" fill="#eef1f6">answers[] or answers{}?</text>
+    <text x="436" y="42" text-anchor="end" font-family="Menlo, monospace" font-size="11.5" fill="#5f6875">card 2 of 6</text>
+
+    <rect x="24" y="58" width="66" height="22" rx="5" fill="#1c1f26" stroke="#272b34"/>
+    <text x="57" y="73" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#8791a1">schema</text>
+    <rect x="98" y="58" width="140" height="22" rx="5" fill="#1c1f26" stroke="#272b34"/>
+    <text x="168" y="73" text-anchor="middle" font-family="Menlo, monospace" font-size="10.5" fill="#8791a1">breaking-change</text>
+
+    <rect x="24" y="96" width="412" height="70" rx="6" fill="#1c1f26"/>
+    <rect x="24" y="96" width="3" height="70" fill="#e0af68"/>
+    <text font-family="Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#aab2c0">
+      <tspan x="38" y="118">Once guide_version hits 1.0.0 this shape</tspan>
+      <tspan x="38" y="136">is load-bearing — every client parses it.</tspan>
+    </text>
+    <text x="38" y="154" font-family="Menlo, monospace" font-size="10.5" fill="#5f6875">3 consumers already assume an array</text>
+
+    <rect x="24" y="180" width="412" height="64" rx="6" fill="#1c1f26" stroke="#272b34"/>
+    <text font-family="Menlo, monospace" font-size="11.5" fill="#c3c9d3">
+      <tspan x="36" y="202">Keep the array — card_id already lives</tspan>
+      <tspan x="36" y="220">on each item; we don't need O(1) yet.</tspan>
+    </text>
+
+    <text x="24" y="268" font-family="Menlo, monospace" font-size="10" letter-spacing="0.08em" fill="#5f6875">YOUR RULING</text>
+
+    <rect x="24" y="278" width="130" height="34" rx="7" fill="#193226" stroke="#77c99b"/>
+    <text x="40" y="300" font-family="Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#77c99b">&#10003; ship it</text>
+
+    <rect x="162" y="278" width="130" height="34" rx="7" fill="#33191b" stroke="#e8797d"/>
+    <text x="178" y="300" font-family="Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#e8797d">&#10007; rework</text>
+
+    <rect x="300" y="278" width="136" height="34" rx="7" fill="#1c1f26" stroke="#343a45"/>
+    <text x="368" y="300" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#8791a1">? discuss</text>
+  </g>
+</svg>
